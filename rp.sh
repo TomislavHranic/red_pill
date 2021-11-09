@@ -36,7 +36,7 @@ do
 	until [ "$USER_IS_OK_WITH_THAT" == "y" ] || [ "$USER_IS_OK_WITH_THAT" == "n" ]
 	do
 		printf "Respond with ${GREEN}y${NC} or ${RED}n${NC} --> "
-		read -p "" USER_IS_OK_WITH_THAT
+		read USER_IS_OK_WITH_THAT
 	done
 done
 
