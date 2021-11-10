@@ -189,5 +189,14 @@ NVM_DIR="/home/${SUDO_USER}/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-nvm install 10.24.0 && nvm install 15.12.0
-nvm use 15.12.0
+nvm install 15.12.0
+
+# Install Visual studio code
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
+sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+rm -f packages.microsoft.gpg
+
+apt install apt-transport-https
+apt update
+apt install code
