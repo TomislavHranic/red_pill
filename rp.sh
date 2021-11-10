@@ -224,3 +224,5 @@ sed -i '/ssh\/id_rsa/c\    - ~/.ssh/id_ed25519' /home/"$SUDO_USER"/homestead/Hom
 sed -i -r '/^provider:/a variables:' /home/"$SUDO_USER"/homestead/Homestead.yaml
 sed -i -r '/^variables:/a \ \ \ \ - key: IS_HOMESTEAD' /home/"$SUDO_USER"/homestead/Homestead.yaml
 sed -i -r '/IS_HOMESTEAD/a \ \ \ \ \ \ value: "true"' /home/"$SUDO_USER"/homestead/Homestead.yaml
+
+chown -R $SUDO_USER /home/$SUDO_USER/homestead
