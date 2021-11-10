@@ -97,6 +97,9 @@ do
 done
 printf "\n${GREEN}SUCCESS: Connected and authenticated on Github!${NC}\n"
 
+# Update system
+apt update && apt upgrade -y
+
 # Install and setup Git
 printf "\n${YELLOW}...installing Git${NC}\n"
 apt install git-all -y
