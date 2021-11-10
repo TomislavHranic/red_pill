@@ -226,3 +226,6 @@ sed -i -r '/^variables:/a \ \ \ \ - key: IS_HOMESTEAD' /home/"$SUDO_USER"/homest
 sed -i -r '/IS_HOMESTEAD/a \ \ \ \ \ \ value: "true"' /home/"$SUDO_USER"/homestead/Homestead.yaml
 
 chown -R $SUDO_USER /home/$SUDO_USER/homestead
+
+printf "${GREEN}SUCCESS: Installed! Add sites to your Homestead.yaml, add site to hosts, reopen terminal and run \"homestead up --provision\"${NC{}"
+printf "Danke schön!"
