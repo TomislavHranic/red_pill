@@ -200,3 +200,8 @@ rm -f packages.microsoft.gpg
 apt install apt-transport-https
 apt update
 apt install code
+
+# Install Virtual box
+apt install virtualbox -y
+apt install virtualbox-guest-additions-iso -y
+
