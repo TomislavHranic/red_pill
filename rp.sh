@@ -210,3 +210,17 @@ apt install vagrant -y
 vagrant plugin install vagrant-bindfs
 vagrant plugin install vagrant-faster
 
+# Install homestead
+git clone https://github.com/laravel/homestead.git /home/$SUDO_USER/homestead
+cd /home/$SUDO_USER/homestead && git checkout release && bash init.sh
+
+echo "function homestead() { ( cd ~/homestead && vagrant "\$\@" ) }" >> /home/"$SUDO_USER"/.bashrc
+echo "export -f homestead" >> /home/"$SUDO_USER"/.bashrc
+
+sed -i '/192.168./c\ip: "192.168.10.10"' /home/"$SUDO_USER"/homestead/Homestead.yaml
+sed -i '/authorize:/c\authorize: ~/.ssh/id_ed25519.pub' /home/"$SUDO_USER"/homestead/Homestead.yaml
+sed -i '/ssh\/id_rsa/c\    - ~/.ssh/id_ed25519' /home/"$SUDO_USER"/homestead/Homestead.yaml
+
+sed -i -r '/^provider:/a variables:' /home/"$SUDO_USER"/homestead/Homestead.yaml
+sed -i -r '/^variables:/a \ \ \ \ - key: IS_HOMESTEAD' /home/"$SUDO_USER"/homestead/Homestead.yaml
+sed -i -r '/IS_HOMESTEAD/a \ \ \ \ \ \ value: "true"' /home/"$SUDO_USER"/homestead/Homestead.yaml
