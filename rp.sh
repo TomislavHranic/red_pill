@@ -85,10 +85,10 @@ do
 	printf "\n\n"
 	read -n 1 -s -r -p "Press any key to proceed..."
 	ssh -oStrictHostKeyChecking=no -T git@github.com
-	if [ $? == 255 ]
+	if [ $? == 255 ] # permission denied
 	then
 		printf "\n${RED}FAIL: Cannot connect to Github! Did you add your SSH key?${NC}"
-	elif [ $? == 1 ]
+	elif [ $? == 1 ] # connected but failed because Github doesn't provide shell
 	then
 		ADDED_TO_GITHUB=true
 	else
@@ -184,11 +184,10 @@ fi
 printf "\n${YELLOW}...installing Node Version Manager${NC}\n"
 su "$SUDO_USER" -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
 
-NVM_DIR="/home/${SUDO_USER}/.nvm"
-su "$SUDO_USER" -c "[ -s \"${NVM_DIR}/nvm.sh\" ] \&\& \\. \"$NVM_DIR/nvm.sh\""
-su "$SUDO_USER" -c "[ -s \"$NVM_DIR/bash_completion\" ] \&\& \\. \"$NVM_DIR/bash_completion\""
 
-su "$SUDO_USER" -c "command -v nvm"
-su "$SUDO_USER" -c "nvm install 10.24.0"
-su "$SUDO_USER" -c "nvm install 15.12.0"
+NVM_DIR="/home/${SUDO_USER}/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+nvm install 10.24.0 && nvm install 15.12.0
 nvm use 15.12.0
