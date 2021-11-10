@@ -80,7 +80,7 @@ chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 ADDED_TO_GITHUB=false
 until [ "$ADDED_TO_GITHUB" == true ]
 do
-	printf "\n\nThis is your SSH public key. Add it to Github.\n\n"
+	printf "\n\nThis is your SSH public key. Add it to Github. ${GRAY}( CTRL + INS to copy )${NC}\n\n"
 	cat /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 	printf "\n\n"
 	read -n 1 -s -r -p "Press any key to proceed..."
@@ -180,4 +180,15 @@ then
 	echo "export PATH=\"\$HOME/.composer/vendor/bin:\$PATH\"" >> /home/"$SUDO_USER"/.bashrc
 fi
 
-su "$SUDO_USER" -c "phpcs -i"
+# Install Node version manager
+printf "\n${YELLOW}...installing Node Version Manager${NC}\n"
+su "$SUDO_USER" -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
+
+NVM_DIR="/home/${SUDO_USER}/.nvm"
+su "$SUDO_USER" -c "[ -s \"${NVM_DIR}/nvm.sh\" ] \&\& \\. \"$NVM_DIR/nvm.sh\""
+su "$SUDO_USER" -c "[ -s \"$NVM_DIR/bash_completion\" ] \&\& \\. \"$NVM_DIR/bash_completion\""
+
+su "$SUDO_USER" -c "command -v nvm"
+su "$SUDO_USER" -c "nvm install 10.24.0"
+su "$SUDO_USER" -c "nvm install 15.12.0"
+nvm use 15.12.0
