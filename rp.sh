@@ -205,3 +205,8 @@ apt install code
 apt install virtualbox -y
 apt install virtualbox-guest-additions-iso -y
 
+# Install Vagrant
+apt install vagrant -y
+vagrant plugin install vagrant-bindfs
+vagrant plugin install vagrant-faster
+
