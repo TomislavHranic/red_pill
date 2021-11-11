@@ -221,7 +221,7 @@ fi
 
 # Install Node version manager
 printf "\n${RED}...installing Node Version Manager${NC}\n"
-su "$SUDO_USER" -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
+su "$SUDO_USER" -c "wget -qo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
 
 
 NVM_DIR="/home/${SUDO_USER}/.nvm"
