@@ -48,7 +48,7 @@ printf "\033[0;34m  \033[0;32m   \033[0;34m    \033[0;32m \033[0;31m.:.X\033[0;3
 printf "\033[0;34m         \033[0;32m \033[0;31m  \033[0;32m..\033[0;34m  :\033[0;1;30m8\033[0;30m@\033[0;33m88;\033[0;33;47m88\033[0;1;33;47m8\033[0;33;47m888\033[0;1;33;43mS\033[0;33;47m888888\033[0;37;43m8\033[0;1;30;43m8\033[0;31m;      $DGIT\n"
 sleep 3
 printf "\n${RED}Take the red pill..."
-sleep 1
+sleep 2
 printf "\n"
 
 # Get user name and email
@@ -207,7 +207,7 @@ printf "\n${YELLOW}...installing Neuralab coding standards${NC}\n"
 su "$SUDO_USER" -c "composer global require neuralab/coding-standards:dev-master"
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot install Neuralab coding standards!${NC} Error calling ${YELLOW}apt install composer -y${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Cannot install Neuralab coding standards!${NC} Error calling ${YELLOW}composer global require neuralab/coding-standards:dev-master${NC}\n${YELLOW}...exiting${NC}\n"
 	exit 1
 fi
 printf "${GREEN}SUCCESS: Neuralab coding standards installed!${NC}\n"
@@ -269,5 +269,8 @@ chown -R $SUDO_USER /home/$SUDO_USER/homestead
 
 echo "192.168.10.10 dev.neuralab.test" >> /etc/hosts
 
-printf "${GREEN}SUCCESS: Installed! Add sites to your Homestead.yaml, add site to hosts, reopen terminal and run \"homestead up --provision\"${NC}"
+mkdir /home/$SUDO_USER/www
+chown -R $SUDO_USER /home/$SUDO_USER/www
+
+printf "${GREEN}SUCCESS: Installed!\nClone reporitories to ~/www/\nAdd sites to:\n~/homestead/Homestead.yaml,\n/etc/hosts,\nreopen terminal and run \"homestead up --provision\"${NC}\n"
 printf "Danke schön!"
