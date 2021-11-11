@@ -2,8 +2,7 @@
 
 NC='\033[0m'
 RED='\033[0;31m'
-YELLOW='\033[0;33m'
-GREEN='\033[0;32m'
+BLUE='\033[0;34m'
 GRAY='\033[1;30m'
 
 # Check if root
@@ -47,7 +46,7 @@ printf "\033[0;34m  \033[0;32m    \033[0;34m   \033[0;32m.;@\033[0;1;30;43mS\033
 printf "\033[0;34m  \033[0;32m   \033[0;34m    \033[0;32m \033[0;31m.:.X\033[0;33m8@S\033[0;1;30;43m8\033[0;33;47m888\033[0;1;33;47m8X\033[0;37;43m@\033[0;1;30;43mX\033[0;31;43mSX8X\033[0;33;41m@\033[0;1;33;43m:\033[0;33;43mt\033[0;33;47m@\033[0;1;33;47m8@\033[0;37;43m8\033[0;35mt\033[0;31mt.\033[0;34m                         \033[0;31m$DMAIL\n"
 printf "\033[0;34m         \033[0;32m \033[0;31m  \033[0;32m..\033[0;34m  :\033[0;1;30m8\033[0;30m@\033[0;33m88;\033[0;33;47m88\033[0;1;33;47m8\033[0;33;47m888\033[0;1;33;43mS\033[0;33;47m888888\033[0;37;43m8\033[0;1;30;43m8\033[0;31m;      $DGIT\n"
 sleep 3
-printf "\n${RED}Take the red pill..."
+printf "\n\033[0;5;31mTake the red pill..."
 sleep 2
 printf "\n"
 
@@ -55,24 +54,24 @@ printf "\n"
 USER_IS_OK_WITH_THAT="n"
 until [ "$USER_IS_OK_WITH_THAT" == "y" ]
 do
-	printf "\n${YELLOW}--> YOUR NAME${NC}\n${GRAY}Use your full name, not your nickname or just your first name. Your${NC} ${GREEN}full legal name${NC}${GRAY}. If you get stuck check your passport :)${NC}\n"
+	printf "\n${RED}--> YOUR NAME${NC}\n${GRAY}Use your full name, not your nickname or just your first name. Your${NC} ${BLUE}full legal name${NC}${GRAY}. If you get stuck check your passport :)${NC}\n"
 	read -p "Enter your name --> " NAME
 	EMAIL=""
 	until [[ "$EMAIL" =~ @neuralab.net$ ]]
 	do
-		printf "\n${YELLOW}--> YOUR EMAIL${NC}\n${GRAY}Use${NC} ${GREEN}your official Neuralab email${NC}${GRAY}, not your private Gmail, Yahoo, Hotmail. If you get stuck check if your email has the word \"neuralab\" in it :)${NC}\n"
+		printf "\n${RED}--> YOUR EMAIL${NC}\n${GRAY}Use${NC} ${BLUE}your official Neuralab email${NC}${GRAY}, not your private Gmail, Yahoo, Hotmail. If you get stuck check if your email has the word \"neuralab\" in it :)${NC}\n"
 		read -p "Enter your Neuralab email --> " EMAIL
 		if [[ ! "$EMAIL" =~ @neuralab.net$ ]]
 		then
 			printf "${RED}FAIL: Your email is not an @neuralab.net email!${NC}\n"
 		fi
 	done
-	printf "\n${YELLOW}Your name:${NC}  ${GREEN}${NAME}${NC}\n"
-	printf "${YELLOW}Your email:${NC} ${GREEN}${EMAIL}${NC}\n"
+	printf "\n${RED}Your name:${NC}  ${BLUE}${NAME}${NC}\n"
+	printf "${RED}Your email:${NC} ${BLUE}${EMAIL}${NC}\n"
 	read -p "Is this correct? (y/n) --> " USER_IS_OK_WITH_THAT
 	until [ "$USER_IS_OK_WITH_THAT" == "y" ] || [ "$USER_IS_OK_WITH_THAT" == "n" ]
 	do
-		printf "Respond with ${GREEN}y${NC} or ${RED}n${NC} --> "
+		printf "Respond with ${BLUE}y${NC} or ${RED}n${NC} --> "
 		read USER_IS_OK_WITH_THAT
 	done
 done
@@ -81,33 +80,33 @@ done
 # Check if SSH ed25519 keys are present, if not create keys
 updatedb
 mkdir -p /home/"${SUDO_USER}"/.ssh/
-printf "\n${YELLOW}...checking if SSH ed25519 keys are present${NC}\n"
+printf "\n${RED}...checking if SSH ed25519 keys are present${NC}\n"
 if ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] || ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ]
 then
-	printf "ed25519 keys not found.\n${YELLOW}...generating keys${NC}\n"
+	printf "ed25519 keys not found.\n${RED}...generating keys${NC}\n"
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 	ssh-keygen -t ed25519 -C "$EMAIL" -f /home/"${SUDO_USER}"/.ssh/id_ed25519 -N ""
 	updatedb
 	if [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] && [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ]
 	then
-		printf "${GREEN}SUCCESS: SSH keys created!${NC}\n"
+		printf "${BLUE}SUCCESS: SSH keys created!${NC}\n"
 	else
-		printf "${RED}FAIL: Cannot create SSH keys!${NC} Error calling ${RED}ssh-keygen -t ed25519 -C \"\$EMAIL\"${NC}\n${YELLOW}...exiting${NC}\n"
+		printf "${RED}FAIL: Cannot create SSH keys!${NC} Error calling ${RED}ssh-keygen -t ed25519 -C \"\$EMAIL\"${NC}\n${RED}...exiting${NC}\n"
 		exit 1
 	fi
 else
-	printf "${GREEN}SUCCESS: ed25519 keys found!${NC}\n"
+	printf "${BLUE}SUCCESS: ed25519 keys found!${NC}\n"
 fi
 
 # Start SSH agent and add credentials
-printf "\n${YELLOW}...starting SSH agent${NC}\n"
+printf "\n${RED}...starting SSH agent${NC}\n"
 eval `ssh-agent -s`
-printf "${YELLOW}...adding your SSH private key to SSH agent${NC}\n"
+printf "${RED}...adding your SSH private key to SSH agent${NC}\n"
 ssh-add /home/"${SUDO_USER}"/.ssh/id_ed25519
 if ! [ $? == 0 ]
 then
-	printf "${RED}FAIL: Cannot add your SSH private key to SSH agent${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Cannot add your SSH private key to SSH agent${NC}\n${RED}...exiting${NC}\n"
 	exit 1
 fi
 chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519
@@ -129,88 +128,88 @@ do
 	then
 		ADDED_TO_GITHUB=true
 	else
-		printf "\n${RED}FAIL: Unexpected error${NC}\n${YELLOW}...exiting${NC}\n"
+		printf "\n${RED}FAIL: Unexpected error${NC}\n${RED}...exiting${NC}\n"
 	fi
 done
-printf "\n${GREEN}SUCCESS: Connected and authenticated on Github!${NC}\n"
+printf "\n${BLUE}SUCCESS: Connected and authenticated on Github!${NC}\n"
 
 # Update system
 apt update && apt upgrade -y
 
 # Install and setup Git
-printf "\n${YELLOW}...installing Git${NC}\n"
+printf "\n${RED}...installing Git${NC}\n"
 apt install git-all -y
 if git --version 2>&1 >/dev/null
 then
-	printf "${GREEN}SUCCESS: Git succesfully installed!${NC}\n"
+	printf "${BLUE}SUCCESS: Git succesfully installed!${NC}\n"
 else
-	printf "${RED}FAIL: Git instalation failed!${NC} Error calling ${YELLOW}apt install git-all -y${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Git instalation failed!${NC} Error calling ${RED}apt install git-all -y${NC}\n${RED}...exiting${NC}\n"
 	exit 1
 fi
 
-printf "\n${YELLOW}...setting your Git name to ${GREEN}${NAME}${NC}\n"
+printf "\n${RED}...setting your Git name to ${BLUE}${NAME}${NC}\n"
 git config --global user.name "$NAME"
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot set Git name!${NC} Error calling ${YELLOW}git config --global user.name \"\$NAME\"${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Cannot set Git name!${NC} Error calling ${RED}git config --global user.name \"\$NAME\"${NC}\n${RED}...exiting${NC}\n"
 	exit 1
 fi
-printf "${GREEN}SUCCESS: Git name set to ${NC}${NAME}\n"
+printf "${BLUE}SUCCESS: Git name set to ${NC}${NAME}\n"
 
-printf "\n${YELLOW}...setting your Git email to ${GREEN}${EMAIL}${NC}\n"
+printf "\n${RED}...setting your Git email to ${BLUE}${EMAIL}${NC}\n"
 git config --global user.email "$EMAIL"
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot set Git email!${NC} Error calling ${YELLOW}git config --global user.email \"\$EMAIL\"${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Cannot set Git email!${NC} Error calling ${RED}git config --global user.email \"\$EMAIL\"${NC}\n${RED}...exiting${NC}\n"
 	exit 1
 fi
-printf "${GREEN}SUCCESS: Git email set to ${NC}${EMAIL}\n"
+printf "${BLUE}SUCCESS: Git email set to ${NC}${EMAIL}\n"
 
-printf "\n${YELLOW}...setting line endings${NC}\n${GRAY}Git tries to convert line endings when you checkout code.\nThis can cause issues on Windows with some of our other tools.\nIn order to fix that we need to set your line ending conversion and force Git to use Unix line endings (LF) instead of the default Windows line endings (CRLF).${NC}\n"
+printf "\n${RED}...setting line endings${NC}\n${GRAY}Git tries to convert line endings when you checkout code.\nThis can cause issues on Windows with some of our other tools.\nIn order to fix that we need to set your line ending conversion and force Git to use Unix line endings (LF) instead of the default Windows line endings (CRLF).${NC}\n"
 git config --global core.autocrlf false
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot set line endings!${NC} Error calling ${YELLOW}git config --global core.autocrlf false${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Cannot set line endings!${NC} Error calling ${RED}git config --global core.autocrlf false${NC}\n${RED}...exiting${NC}\n"
 	exit 1
 fi
-printf "${GREEN}SUCCESS: Git line endings set to LF${NC}\n"
+printf "${BLUE}SUCCESS: Git line endings set to LF${NC}\n"
 
 # Install PHP 7.4
-printf "\n${YELLOW}...installing PHP 7.4${NC}\n"
+printf "\n${RED}...installing PHP 7.4${NC}\n"
 apt install php7.4-cli -y
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot install PHP 7.4 cli!${NC} Error calling ${YELLOW}apt install php7.4-cli -y${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Cannot install PHP 7.4 cli!${NC} Error calling ${RED}apt install php7.4-cli -y${NC}\n${RED}...exiting${NC}\n"
 	exit 1
 fi
-printf "${GREEN}SUCCESS: PHP 7.4 cli installed!${NC}\n"
+printf "${BLUE}SUCCESS: PHP 7.4 cli installed!${NC}\n"
 apt install php7.4-xmlwriter -y
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot install PHP 7.4 xmlwriter!${NC} Error calling ${YELLOW}apt install php7.4-xmlwriter -y${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Cannot install PHP 7.4 xmlwriter!${NC} Error calling ${RED}apt install php7.4-xmlwriter -y${NC}\n${RED}...exiting${NC}\n"
 	exit 1
 fi
-printf "${GREEN}SUCCESS: PHP 7.4 xmlwriter installed!${NC}\n"
+printf "${BLUE}SUCCESS: PHP 7.4 xmlwriter installed!${NC}\n"
 
 # Install Composer
-printf "\n${YELLOW}...installing PHP 7.4${NC}\n"
+printf "\n${RED}...installing PHP 7.4${NC}\n"
 apt install composer -y
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot install Composer!${NC} Error calling ${YELLOW}apt install composer -y${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Cannot install Composer!${NC} Error calling ${RED}apt install composer -y${NC}\n${RED}...exiting${NC}\n"
 	exit 1
 fi
-printf "${GREEN}SUCCESS: Composer installed!${NC}\n"
+printf "${BLUE}SUCCESS: Composer installed!${NC}\n"
 
 # Install coding standards
-printf "\n${YELLOW}...installing Neuralab coding standards${NC}\n"
+printf "\n${RED}...installing Neuralab coding standards${NC}\n"
 su "$SUDO_USER" -c "composer global require neuralab/coding-standards:dev-master"
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot install Neuralab coding standards!${NC} Error calling ${YELLOW}composer global require neuralab/coding-standards:dev-master${NC}\n${YELLOW}...exiting${NC}\n"
+	printf "${RED}FAIL: Cannot install Neuralab coding standards!${NC} Error calling ${RED}composer global require neuralab/coding-standards:dev-master${NC}\n${RED}...exiting${NC}\n"
 	exit 1
 fi
-printf "${GREEN}SUCCESS: Neuralab coding standards installed!${NC}\n"
+printf "${BLUE}SUCCESS: Neuralab coding standards installed!${NC}\n"
 
 # Check if phpcs added to path
 phpcs -i
@@ -221,7 +220,7 @@ then
 fi
 
 # Install Node version manager
-printf "\n${YELLOW}...installing Node Version Manager${NC}\n"
+printf "\n${RED}...installing Node Version Manager${NC}\n"
 su "$SUDO_USER" -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
 
 
@@ -272,5 +271,5 @@ echo "192.168.10.10 dev.neuralab.test" >> /etc/hosts
 mkdir /home/$SUDO_USER/www
 chown -R $SUDO_USER /home/$SUDO_USER/www
 
-printf "${GREEN}SUCCESS: Installed!\nClone reporitories to ~/www/\nAdd sites to:\n~/homestead/Homestead.yaml,\n/etc/hosts,\nreopen terminal and run \"homestead up --provision\"${NC}\n"
+printf "${BLUE}SUCCESS: Installed!\nClone reporitories to ~/www/\nAdd sites to:\n~/homestead/Homestead.yaml,\n/etc/hosts,\nreopen terminal and run \"homestead up --provision\"${NC}\n"
 printf "Danke schön!"
