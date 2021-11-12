@@ -121,7 +121,7 @@ then
 		printf "$(date +'%D %T') SSH ed25519 keys created!\n" >> rp_debug.log
 	else
 		printf "${RED}FAIL: Cannot create SSH keys! Check rp_debug.log for more info.${NC}\n"
-		printf "$(date +'%D %T') FAIL: Cannot create SSH keys! Error calling ssh-keygen -t ed25519 -C \"$EMAIL\"\n" >> rp_debug.log
+		printf "$(date +'%D %T') FAIL: Cannot create SSH keys! Error running ssh-keygen -t ed25519 -C \"$EMAIL\"\n" >> rp_debug.log
 		exit 1
 	fi
 else
@@ -243,7 +243,7 @@ printf "$(date +'%D %T') Installing php7.4-cli\n" >> rp_debug.log
 apt install php7.4-cli -y
 if [ $? -ne 0 ]
 then
-	printf "$(date +'%D %T') FAIL: Cannot install PHP 7.4 cli! Error calling apt install php7.4-cli -y\n" >> rp_debug.log
+	printf "$(date +'%D %T') FAIL: Cannot install PHP 7.4 cli! Error running apt install php7.4-cli -y\n" >> rp_debug.log
 	printf "${RED}FAIL: Cannot install PHP 7.4 cli! Check rp_debug.log for more info.${NC}\n"
 	exit 1
 fi
@@ -252,7 +252,7 @@ printf "$(date +'%D %T') Installing php7.4-xmlwriter\n" >> rp_debug.log
 apt install php7.4-xmlwriter -y
 if [ $? -ne 0 ]
 then
-	printf "$(date +'%D %T') FAIL: Cannot install PHP 7.4 xmlwriter! Error calling apt install php7.4-xmlwriter -y\n" >> rp_debug.log
+	printf "$(date +'%D %T') FAIL: Cannot install PHP 7.4 xmlwriter! Error running apt install php7.4-xmlwriter -y\n" >> rp_debug.log
 	printf "${RED}FAIL: Cannot install PHP 7.4 xmlwriter! Check rp_debug.log for more info.${NC}\n"
 	exit 1
 fi
@@ -263,7 +263,7 @@ printf "$(date +'%D %T') Installing composer\n" >> rp_debug.log
 apt install composer -y
 if [ $? -ne 0 ]
 then
-	printf "$(date +'%D %T') FAIL: Cannot install Composer! Error calling apt install composer -y\n" >> rp_debug.log
+	printf "$(date +'%D %T') FAIL: Cannot install Composer! Error running apt install composer -y\n" >> rp_debug.log
 	printf "${RED}FAIL: Cannot install Composer! Check rp_debug.log for more info.${NC}\n"
 	exit 1
 fi
@@ -274,7 +274,7 @@ printf "$(date +'%D %T') Installing Neuralab coding standards\n" >> rp_debug.log
 su "$SUDO_USER" -c "composer global require neuralab/coding-standards:dev-master"
 if [ $? -ne 0 ]
 then
-	printf "$(date +'%D %T') WARNING: Cannot install Neuralab coding standards! Error calling composer global require neuralab/coding-standards:dev-master Continuing...\n" >> rp_debug.log
+	printf "$(date +'%D %T') WARNING: Cannot install Neuralab coding standards! Error running composer global require neuralab/coding-standards:dev-master Continuing...\n" >> rp_debug.log
 	printf "${RED}WARNING: Cannot install Neuralab coding standards! Continuing...${NC}\n"
 else
 	printf "$(date +'%D %T') Neuralab coding standards successfully installed\n" >> rp_debug.log
@@ -299,16 +299,33 @@ NVM_DIR="/home/${SUDO_USER}/.nvm"
 command -v nvm
 if [ $? -ne 0 ]
 then
-	printf "$(date +'%D %T') FAIL: Something went wrong. Cannot run nvm!\n" >> rp_debug.log
-	printf "${RED}Something went wrong. Cannot run nvm!${NC}\n"
+	printf "$(date +'%D %T') FAIL: Something went wrong. Cannot run nvm command!\n" >> rp_debug.log
+	printf "${RED}Something went wrong. Cannot run nvm command!${NC}\n"
 	exit 1
 else
 	printf "$(date +'%D %T') nvm command available\n" >> rp_debug.log
 fi
 
+printf "$(date +'%D %T') Installing Node 10.24.0\n" >> rp_debug.log
 nvm install 10.24.0
+if [ $? -ne 0 ]
+then
+	printf "$(date +'%D %T') WARNING: Cannot install Node. nvm install 10.24.0 failed. Continuing...\n" >> rp_debug.log
+else
+	printf "$(date +'%D %T') Node 10.24.0 successfully installed\n" >> rp_debug.log
+fi
 
-# Install Visual studio code
+printf "$(date +'%D %T') Use Node 10.24.0 \n" >> rp_debug.log
+nvm use 10.24.0
+if [ $? -ne 0 ]
+then
+	printf "$(date +'%D %T') WARNING: Cannot use Node 10.24.0. nvm use 10.24.0 failed. Continuing...\n" >> rp_debug.log
+else
+	printf "$(date +'%D %T') Using Node 10.24.0\n" >> rp_debug.log
+fi
+
+# Install Visual Studio Code
+printf "$(date +'%D %T') Installing Visual Studio Code\n" >> rp_debug.log
 wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
 install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
 sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
@@ -317,17 +334,74 @@ rm -f packages.microsoft.gpg
 apt install apt-transport-https
 apt update
 apt install code
+if [ $? -ne 0 ]
+then
+	printf "$(date +'%D %T') WARNING: Visual Studio Code installation failed. Continuing...\n" >> rp_debug.log
+else
+	printf "$(date +'%D %T') Visual Studio Code successfully installed\n" >> rp_debug.log
+fi
+
 
 # Install Virtual box
+printf "$(date +'%D %T') Installing virtualbox\n" >> rp_debug.log
 apt install virtualbox -y
+if [ $? -ne 0 ]
+then
+	printf "$(date +'%D %T') FAIL: virtualbox installation failed. Error running apt install virtualbox -y\n" >> rp_debug.log
+	printf "${RED}Something went wrong. Virtualbox installation failed!${NC}\n"
+	exit 1
+else
+	printf "$(date +'%D %T') virtualbox successfully installed\n" >> rp_debug.log
+fi
+
+printf "$(date +'%D %T') Installing virtualbox-guest-additions-iso\n" >> rp_debug.log
 apt install virtualbox-guest-additions-iso -y
+if [ $? -ne 0 ]
+then
+	printf "$(date +'%D %T') FAIL: virtualbox-guest-additions-iso installation failed. Error running apt install virtualbox-guest-additions-iso -y\n" >> rp_debug.log
+	printf "${RED}Something went wrong. Virtualbox guest additions installation failed!${NC}\n"
+	exit 1
+else
+	printf "$(date +'%D %T') virtualbox-guest-additions-iso successfully installed\n" >> rp_debug.log
+fi
 
 # Install Vagrant
+printf "$(date +'%D %T') Installing vagrant\n" >> rp_debug.log
 apt install vagrant -y
+if [ $? -ne 0 ]
+then
+	printf "$(date +'%D %T') FAIL: vagrant installation failed. Error running apt install vagrant -y\n" >> rp_debug.log
+	printf "${RED}Something went wrong. Vagrant installation failed!${NC}\n"
+	exit 1
+else
+	printf "$(date +'%D %T') vagrant successfully installed\n" >> rp_debug.log
+fi
+
+printf "$(date +'%D %T') Installing vagrant-bindfs\n" >> rp_debug.log
 vagrant plugin install vagrant-bindfs
+if [ $? -ne 0 ]
+then
+	printf "$(date +'%D %T') FAIL: vagrant-bindfs installation failed. Error running vagrant plugin install vagrant-bindfs\n" >> rp_debug.log
+	printf "${RED}Something went wrong. Vagrant plugin bindfs installation failed!${NC}\n"
+	exit 1
+else
+	printf "$(date +'%D %T') vagrant-bindfs successfully installed\n" >> rp_debug.log
+fi
+
+
+printf "$(date +'%D %T') Installing vagrant-faster\n" >> rp_debug.log
 vagrant plugin install vagrant-faster
+if [ $? -ne 0 ]
+then
+	printf "$(date +'%D %T') FAIL: vagrant-faster installation failed. Error running vagrant plugin install vagrant-faster\n" >> rp_debug.log
+	printf "${RED}Something went wrong. Vagrant plugin fasater installation failed!${NC}\n"
+	exit 1
+else
+	printf "$(date +'%D %T') vagrant-faster successfully installed\n" >> rp_debug.log
+fi
 
 # Install homestead
+printf "$(date +'%D %T') Installing homestead\n" >> rp_debug.log
 git clone https://github.com/laravel/homestead.git /home/$SUDO_USER/homestead
 cd /home/$SUDO_USER/homestead && git checkout release && bash init.sh
 
@@ -348,6 +422,7 @@ echo "192.168.10.10 dev.neuralab.test" >> /etc/hosts
 
 mkdir /home/$SUDO_USER/www
 chown -R $SUDO_USER /home/$SUDO_USER/www
+printf "$(date +'%D %T') Homestead installed\n" >> rp_debug.log
 
 printf "${BLUE}SUCCESS: Installed!\nClone reporitories to ~/www/\nAdd sites to:\n~/homestead/Homestead.yaml,\n/etc/hosts,\nreopen terminal and run \"homestead up --provision\"${NC}\n"
 printf "Danke schön!"
