@@ -16,9 +16,9 @@ fi
 
 DMAIL="tomislav@neuralab.net"
 DGIT="https://github.com/TomislavHranicNeuralab"
-VERSION="v0.0.1"
+VERSION="v0.0.2"
 SCRIPT_NAME="Red Pill"
-VERDATE="11-Nov-2021"
+VERDATE="12-Nov-2021"
 
 clear
 printf "\033[0;34m                                          \033[0;32m   \033[0;34m \033[0;32m     \033[0;34m         \033[0m\n"
@@ -61,6 +61,10 @@ entry=white,black
 '
 # Start log
 touch rp_debug.log
+printf "\n##################################################\n"
+printf "Script name: $SCRIPT_NAME\n" >> rp_debug.log
+printf "Version: $VERSION\n" >> rp_debug.log
+printf "Script started $(date +'%D %T')\n\n" >> rp_debug.log
 
 # Get user info with whiptail
 USER_IS_OK_WITH_THAT=1
@@ -70,10 +74,10 @@ do
 	EXITSTATUS=$?
 	if [ $EXITSTATUS -ne 0 ]
 	then
-		echo "Exited on name entering dialog. Exit status: $EXITSTATUS" >> rp_debug.log
+		printf "$(date +'%D %T') Exited on name entering dialog. Exit status: $EXITSTATUS\n" >> rp_debug.log
 		exit $EXITSTATUS
 	fi
-	echo "User successfully entered name $NAME" >> rp_debug.log
+	printf "$(date +'%D %T') User successfully entered name $NAME\n" >> rp_debug.log
 
 	EMAIL=""
 	until [[ "$EMAIL" =~ @neuralab.net$ ]]
@@ -82,21 +86,23 @@ do
 		EXITSTATUS=$?
 		if [ $EXITSTATUS -ne 0 ]
 		then
-			echo "Exited on email entering dialog. Exit status: $EXITSTATUS" >> rp_debug.log
+			printf "$(date +'%D %T') Exited on email entering dialog. Exit status: $EXITSTATUS\n" >> rp_debug.log
 			exit $EXITSTATUS
 		elif [[ ! "$EMAIL" =~ @neuralab.net$ ]]
 		then
-			echo "User entered a non @neuralab.net email address $EMAIL" >> rp_debug.log
+			printf "$(date +'%D %T') User entered a non @neuralab.net email address $EMAIL\n" >> rp_debug.log
 			whiptail --msgbox "$EMAIL is not an @neuralab.net email!" --title "FAIL" 12 48
 		fi
 	done
+
+	printf "$(date +'%D %T') User successfully entered email address $EMAIL\n" >> rp_debug.log
 	USER_IS_OK_WITH_THAT=$(whiptail --yesno "Your name: $NAME\nYour email: $EMAIL\nIs this correct?" 12 48 --title "You are" 3>&1 1>&2 2>&3)
 	USER_IS_OK_WITH_THAT=$?
-	echo "User confirms $NAME and $EMAIL? (0 = yes): $USER_IS_OK_WITH_THAT" >> rp_debug.log
+	printf "$(date +'%D %T') User confirms $NAME and $EMAIL? (0 = yes): $USER_IS_OK_WITH_THAT\n" >> rp_debug.log
 done
 
-echo "Users name set to $NAME" >> rp_debug.log
-echo "Users email set to $EMAIL" >> rp_debug.log
+printf "$(date +'%D %T') Users name set to $NAME\n" >> rp_debug.log
+printf "$(date +'%D %T') Users email set to $EMAIL\n" >> rp_debug.log
 
 
 # Check if SSH ed25519 keys are present, if not create keys
@@ -105,21 +111,21 @@ mkdir -p /home/"${SUDO_USER}"/.ssh/
 if ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] || ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ]
 then
 	printf "ed25519 keys not found.\n${RED}...generating keys${NC}\n"
-	echo "SSH ed25519 keys not found. Generating..." >> rp_debug.log
+	printf "$(date +'%D %T') SSH ed25519 keys not found. Generating...\n" >> rp_debug.log
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 	ssh-keygen -t ed25519 -C "$EMAIL" -f /home/"${SUDO_USER}"/.ssh/id_ed25519 -N ""
 	updatedb
 	if [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] && [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ]
 	then
-		echo "SSH ed25519 keys created!" >> rp_debug.log
+		printf "$(date +'%D %T') SSH ed25519 keys created!\n" >> rp_debug.log
 	else
 		printf "${RED}FAIL: Cannot create SSH keys! Check rp_debug.log for more info.${NC}\n"
-		echo "FAIL: Cannot create SSH keys! Error calling ssh-keygen -t ed25519 -C \"$EMAIL\"" >> rp_debug.log
+		printf "$(date +'%D %T') FAIL: Cannot create SSH keys! Error calling ssh-keygen -t ed25519 -C \"$EMAIL\"\n" >> rp_debug.log
 		exit 1
 	fi
 else
-	echo "SSH ed25519 keys found!" >> rp_debug.log
+	printf "$(date +'%D %T') SSH ed25519 keys found!\n" >> rp_debug.log
 fi
 
 # Start SSH agent and add credentials
@@ -127,14 +133,23 @@ eval `ssh-agent -s`
 ssh-add /home/"${SUDO_USER}"/.ssh/id_ed25519
 if ! [ $? == 0 ]
 then
-	echo "Cannot add your SSH private key to SSH agent. Exit status: $?" >> rp_debug.log
+	printf "$(date +'%D %T') Cannot add your SSH private key to SSH agent. Exit status: $?\n" >> rp_debug.log
 	exit 1
 fi
 chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519
 chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 
-# install xclip
+# Install Xclip clipboard
+printf "$(date +'%D %T') Installing xclip\n" >> rp_debug.log
 apt install xclip -y
+EXITSTATUS=$?
+if [ $EXITSTATUS -ne 0 ]
+then
+	printf "$(date +'%D %T') WARNING: xclip installation failed. Continuing...\n" >> rp_debug.log
+	printf "${RED}WARNING: Xclip clipboard installation failed. Continuing...${NC}\n"
+else
+	printf "$(date +'%D %T') xclip successfully installed\n" >> rp_debug.log
+fi
 
 # Show SSH public key, request to add it to Github, test connection
 ADDED_TO_GITHUB=false
@@ -149,103 +164,121 @@ do
 		if [ $TESTCONNECTION == 1 ]
 		then
 			echo $SSHKEY | xclip -sel clip
+			printf "$(date +'%D %T') SSH key copied to clipboard\n" >> rp_debug.log
 		fi
 	done
 
+	printf "$(date +'%D %T') Testing connection to Github\n" >> rp_debug.log
 	ssh -oStrictHostKeyChecking=no -T git@github.com
 	EXITSTATUS=$?
 	if [ $EXITSTATUS == 255 ] # permission denied
 	then
+		printf "$(date +'%D %T') Cannot connect to Github! Exit status: $EXITSTATUS\n" >> rp_debug.log
 		whiptail --yesno "Cannot connect to Github! Did you add your SSH key?" --title "FAIL" --yes-button "Try again" --no-button "Exit" 12 48
 		if [ $? -ne 0 ]
 		then
+			printf "$(date +'%D %T') User exited\n" >> rp_debug.log
 			exit 1
 		fi
 	elif [ $EXITSTATUS == 1 ] # connected but failed because Github doesn't provide shell
 	then
 		ADDED_TO_GITHUB=true
 	else
+		printf "$(date +'%D %T') Unexpected error. Exit status: $EXITSTATUS\n" >> rp_debug.log
 		whiptail --msgbox "Unexpected error\nExit status: $EXITSTATUS" --title "FAIL" --ok-button "Exit" 12 48
 		exit $EXITSTATUS
 	fi
 done
+
+printf "$(date +'%D %T') Connected to Github!\n" >> rp_debug.log
 whiptail --msgbox "SUCCESS: Connected and authenticated on Github!" --title "SUCCESS" 12 48
 
 # Update system
+printf "$(date +'%D %T') Running system update\n" >> rp_debug.log
 apt update && apt upgrade -y
+printf "$(date +'%D %T') System updated\n" >> rp_debug.log
+
 
 # Install and config Git
+printf "$(date +'%D %T') Installing Git\n" >> rp_debug.log
 apt install git-all -y
 if git --version 2>&1 >/dev/null
 then
-	printf "${BLUE}SUCCESS: Git succesfully installed!${NC}\n"
+	printf "$(date +'%D %T') Git successfully installed\n" >> rp_debug.log
 else
-	printf "${RED}FAIL: Git instalation failed!${NC} Error calling ${RED}apt install git-all -y${NC}\n${RED}...exiting${NC}\n"
+	printf "$(date +'%D %T') FAIL: Git instalation failed! (git --version 2>&1 >/dev/null) did not detect Git\n" >> rp_debug.log
+	printf "${RED}FAIL: Git instalation failed! Check rp_debug.log for more info.${NC}\n"
 	exit 1
 fi
 
 git config --global user.name "$NAME"
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot set Git name!${NC} Error calling ${RED}git config --global user.name \"\$NAME\"${NC}\n${RED}...exiting${NC}\n"
-	exit 1
+	printf "${RED}WARNING: Cannot set Git name! Continuing...${NC}\n"
+	printf "$(date +'%D %T') WARNING: Cannot set Git name! Continuing...\n" >> rp_debug.log
+else
+	printf "$(date +'%D %T') Git name set to $NAME\n" >> rp_debug.log
 fi
-printf "${BLUE}SUCCESS: Git name set to ${NC}${NAME}\n"
 
-printf "\n${RED}...setting your Git email to ${BLUE}${EMAIL}${NC}\n"
 git config --global user.email "$EMAIL"
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot set Git email!${NC} Error calling ${RED}git config --global user.email \"\$EMAIL\"${NC}\n${RED}...exiting${NC}\n"
-	exit 1
+	printf "${RED}WARNING: Cannot set Git email! Continuing...${NC}\n"
+	printf "$(date +'%D %T') WARNING: Cannot set Git email! Continuing...\n" >> rp_debug.log
+else
+	printf "$(date +'%D %T') Git email set to $EMAIL\n" >> rp_debug.log
 fi
-printf "${BLUE}SUCCESS: Git email set to ${NC}${EMAIL}\n"
 
-printf "\n${RED}...setting line endings${NC}\n${GRAY}Git tries to convert line endings when you checkout code.\nThis can cause issues on Windows with some of our other tools.\nIn order to fix that we need to set your line ending conversion and force Git to use Unix line endings (LF) instead of the default Windows line endings (CRLF).${NC}\n"
 git config --global core.autocrlf false
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot set line endings!${NC} Error calling ${RED}git config --global core.autocrlf false${NC}\n${RED}...exiting${NC}\n"
-	exit 1
+	printf "${RED}WARNING: Cannot set Git line endings to LF! Continuing...${NC}\n"
+	printf "$(date +'%D %T') WARNING: Cannot set Git line endings to LF!! Continuing...\n" >> rp_debug.log
+else
+	printf "$(date +'%D %T') Git line endings set to LF\n" >> rp_debug.log
 fi
-printf "${BLUE}SUCCESS: Git line endings set to LF${NC}\n"
 
 # Install PHP 7.4
-printf "\n${RED}...installing PHP 7.4${NC}\n"
+printf "$(date +'%D %T') Installing php7.4-cli\n" >> rp_debug.log
 apt install php7.4-cli -y
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot install PHP 7.4 cli!${NC} Error calling ${RED}apt install php7.4-cli -y${NC}\n${RED}...exiting${NC}\n"
+	printf "$(date +'%D %T') FAIL: Cannot install PHP 7.4 cli! Error calling apt install php7.4-cli -y\n" >> rp_debug.log
+	printf "${RED}FAIL: Cannot install PHP 7.4 cli! Check rp_debug.log for more info.${NC}\n"
 	exit 1
 fi
-printf "${BLUE}SUCCESS: PHP 7.4 cli installed!${NC}\n"
+printf "$(date +'%D %T') php7.4-cli successfully installed\n" >> rp_debug.log
+printf "$(date +'%D %T') Installing php7.4-xmlwriter\n" >> rp_debug.log
 apt install php7.4-xmlwriter -y
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot install PHP 7.4 xmlwriter!${NC} Error calling ${RED}apt install php7.4-xmlwriter -y${NC}\n${RED}...exiting${NC}\n"
+	printf "$(date +'%D %T') FAIL: Cannot install PHP 7.4 xmlwriter! Error calling apt install php7.4-xmlwriter -y\n" >> rp_debug.log
+	printf "${RED}FAIL: Cannot install PHP 7.4 xmlwriter! Check rp_debug.log for more info.${NC}\n"
 	exit 1
 fi
-printf "${BLUE}SUCCESS: PHP 7.4 xmlwriter installed!${NC}\n"
+printf "$(date +'%D %T') php7.4-xmlwriter successfully installed\n" >> rp_debug.log
 
 # Install Composer
-printf "\n${RED}...installing PHP 7.4${NC}\n"
+printf "$(date +'%D %T') Installing composer\n" >> rp_debug.log
 apt install composer -y
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot install Composer!${NC} Error calling ${RED}apt install composer -y${NC}\n${RED}...exiting${NC}\n"
+	printf "$(date +'%D %T') FAIL: Cannot install Composer! Error calling apt install composer -y\n" >> rp_debug.log
+	printf "${RED}FAIL: Cannot install Composer! Check rp_debug.log for more info.${NC}\n"
 	exit 1
 fi
-printf "${BLUE}SUCCESS: Composer installed!${NC}\n"
+printf "$(date +'%D %T') composer successfully installed\n" >> rp_debug.log
 
 # Install coding standards
-printf "\n${RED}...installing Neuralab coding standards${NC}\n"
+printf "$(date +'%D %T') Installing Neuralab coding standards\n" >> rp_debug.log
 su "$SUDO_USER" -c "composer global require neuralab/coding-standards:dev-master"
 if [ $? -ne 0 ]
 then
-	printf "${RED}FAIL: Cannot install Neuralab coding standards!${NC} Error calling ${RED}composer global require neuralab/coding-standards:dev-master${NC}\n${RED}...exiting${NC}\n"
-	exit 1
+	printf "$(date +'%D %T') WARNING: Cannot install Neuralab coding standards! Error calling composer global require neuralab/coding-standards:dev-master Continuing...\n" >> rp_debug.log
+	printf "${RED}WARNING: Cannot install Neuralab coding standards! Continuing...${NC}\n"
+else
+	printf "$(date +'%D %T') Neuralab coding standards successfully installed\n" >> rp_debug.log
 fi
-printf "${BLUE}SUCCESS: Neuralab coding standards installed!${NC}\n"
 
 # Check if phpcs added to path
 phpcs -i
@@ -256,13 +289,22 @@ then
 fi
 
 # Install Node version manager
-printf "\n${RED}...installing Node Version Manager${NC}\n"
+printf "$(date +'%D %T') Installing Node Version Manager\n" >> rp_debug.log
 su "$SUDO_USER" -c "wget -qo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
-
 
 NVM_DIR="/home/${SUDO_USER}/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+command -v nvm
+if [ $? -ne 0 ]
+then
+	printf "$(date +'%D %T') FAIL: Something went wrong. Cannot run nvm!\n" >> rp_debug.log
+	printf "${RED}Something went wrong. Cannot run nvm!${NC}\n"
+	exit 1
+else
+	printf "$(date +'%D %T') nvm command available\n" >> rp_debug.log
+fi
 
 nvm install 10.24.0
 
