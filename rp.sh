@@ -290,7 +290,7 @@ fi
 
 # Install Node version manager
 printf "$(date +'%D %T') Installing Node Version Manager\n" >> rp_debug.log
-su "$SUDO_USER" -c "wget -qo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
+su "$SUDO_USER" -c "wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
 
 NVM_DIR="/home/${SUDO_USER}/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
