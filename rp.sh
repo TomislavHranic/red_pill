@@ -61,7 +61,7 @@ entry=white,black
 '
 # Start log
 touch rp_debug.log
-printf "\n##################################################\n"
+printf "\n##################################################\n" >> rp_debug.log
 printf "Script name: $SCRIPT_NAME\n" >> rp_debug.log
 printf "Version: $VERSION\n" >> rp_debug.log
 printf "Script started $(date +'%D %T')\n\n" >> rp_debug.log
