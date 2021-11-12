@@ -424,5 +424,5 @@ mkdir /home/$SUDO_USER/www
 chown -R $SUDO_USER /home/$SUDO_USER/www
 printf "$(date +'%D %T') Homestead installed\n" >> rp_debug.log
 
-whiptail --msgbox "Your dev env is installed\nClone reporitories to ~/www/\nAdd sites to:\n   ~/homestead/Homestead.yaml,\n   /etc/hosts,\nReopen terminal and run \"homestead up --provision\"\nDanke schön!" --title "Installed!" 20 48
+whiptail --msgbox "Your dev env is installed\nClone reporitories to:\n     ~/www/\nAdd sites to:\n   ~/homestead/Homestead.yaml\n     /etc/hosts\nReopen terminal and run:\n     \"homestead up --provision\"\n\nDanke schön!" --title "Installed!" 16 60
 exit 0
