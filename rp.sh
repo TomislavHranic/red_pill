@@ -4,6 +4,7 @@ NC='\033[0m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
 GRAY='\033[1;30m'
+EXITSTATUS=1 # Error unless it's not an error
 
 # Check if root
 if [ "$EUID" -ne 0 ]
@@ -45,99 +46,135 @@ printf "\033[0;34m \033[0;32m     \033[0;34m  \033[0;31m :@\033[0;1;30;43m.\033[
 printf "\033[0;34m  \033[0;32m    \033[0;34m   \033[0;32m.;@\033[0;1;30;43mS\033[0;35mS\033[0;33m:\033[0;33;47m8\033[0;1;33;47m8\033[0;37;43m@\033[0;33;47m88\033[0;1;33;47m8\033[0;1;33;43m;\033[0;1;31;43m888\033[0;1;30;43m;\033[0;31;43m8\033[0;33;42m8\033[0;31;43m8XS\033[0;1;33;43m.\033[0;33;47m88\033[0;1;31;43m8\033[0;1;37;47m \033[0;30;41mS\033[0;34m.                      \033[0;31mversion date: $VERDATE\n"
 printf "\033[0;34m  \033[0;32m   \033[0;34m    \033[0;32m \033[0;31m.:.X\033[0;33m8@S\033[0;1;30;43m8\033[0;33;47m888\033[0;1;33;47m8X\033[0;37;43m@\033[0;1;30;43mX\033[0;31;43mSX8X\033[0;33;41m@\033[0;1;33;43m:\033[0;33;43mt\033[0;33;47m@\033[0;1;33;47m8@\033[0;37;43m8\033[0;35mt\033[0;31mt.\033[0;34m                         \033[0;31m$DMAIL\n"
 printf "\033[0;34m         \033[0;32m \033[0;31m  \033[0;32m..\033[0;34m  :\033[0;1;30m8\033[0;30m@\033[0;33m88;\033[0;33;47m88\033[0;1;33;47m8\033[0;33;47m888\033[0;1;33;43mS\033[0;33;47m888888\033[0;37;43m8\033[0;1;30;43m8\033[0;31m;      $DGIT\n"
-sleep 3
-printf "\n\033[0;5;31mTake the red pill..."
-sleep 2
-printf "\n"
+printf "\n\033[0;31mTake the red pill?"
+read
 
-# Get user name and email
-USER_IS_OK_WITH_THAT="n"
-until [ "$USER_IS_OK_WITH_THAT" == "y" ]
+# Whiptail colors
+export NEWT_COLORS='
+root=red,black
+window=,red
+border=white,red
+textbox=white,red
+button=white,black
+actbutton=black,white
+entry=white,black
+'
+# Start log
+touch rp_debug.log
+
+# Get user info with whiptail
+USER_IS_OK_WITH_THAT=1
+until [ "$USER_IS_OK_WITH_THAT" == 0 ]
 do
-	printf "\n${RED}--> YOUR NAME${NC}\n${GRAY}Use your full name, not your nickname or just your first name. Your${NC} ${BLUE}full legal name${NC}${GRAY}. If you get stuck check your passport :)${NC}\n"
-	read -p "Enter your name --> " NAME
+	NAME=$(whiptail --inputbox "Enter your name. Use your full name, not your nickname or just your first name. Your full legal name. If you get stuck check your passport :)" 12 48 --title "Your name" --cancel-button "Exit" 3>&1 1>&2 2>&3)
+	EXITSTATUS=$?
+	if [ $EXITSTATUS -ne 0 ]
+	then
+		echo "Exited on name entering dialog. Exit status: $EXITSTATUS" >> rp_debug.log
+		exit $EXITSTATUS
+	fi
+	echo "User successfully entered name $NAME" >> rp_debug.log
+
 	EMAIL=""
 	until [[ "$EMAIL" =~ @neuralab.net$ ]]
 	do
-		printf "\n${RED}--> YOUR EMAIL${NC}\n${GRAY}Use${NC} ${BLUE}your official Neuralab email${NC}${GRAY}, not your private Gmail, Yahoo, Hotmail. If you get stuck check if your email has the word \"neuralab\" in it :)${NC}\n"
-		read -p "Enter your Neuralab email --> " EMAIL
-		if [[ ! "$EMAIL" =~ @neuralab.net$ ]]
+		EMAIL=$(whiptail --inputbox "Enter your email. Use your official Neuralab email, not your private Gmail, Yahoo, Hotmail. If you get stuck check if your email has the word \"neuralab\" in it :)" 12 48 --title "Your email" --cancel-button "Exit" 3>&1 1>&2 2>&3)
+		EXITSTATUS=$?
+		if [ $EXITSTATUS -ne 0 ]
 		then
-			printf "${RED}FAIL: Your email is not an @neuralab.net email!${NC}\n"
+			echo "Exited on email entering dialog. Exit status: $EXITSTATUS" >> rp_debug.log
+			exit $EXITSTATUS
+		elif [[ ! "$EMAIL" =~ @neuralab.net$ ]]
+		then
+			echo "User entered a non @neuralab.net email address $EMAIL" >> rp_debug.log
+			whiptail --msgbox "$EMAIL is not an @neuralab.net email!" --title "FAIL" 12 48
 		fi
 	done
-	printf "\n${RED}Your name:${NC}  ${BLUE}${NAME}${NC}\n"
-	printf "${RED}Your email:${NC} ${BLUE}${EMAIL}${NC}\n"
-	read -p "Is this correct? (y/n) --> " USER_IS_OK_WITH_THAT
-	until [ "$USER_IS_OK_WITH_THAT" == "y" ] || [ "$USER_IS_OK_WITH_THAT" == "n" ]
-	do
-		printf "Respond with ${BLUE}y${NC} or ${RED}n${NC} --> "
-		read USER_IS_OK_WITH_THAT
-	done
+	USER_IS_OK_WITH_THAT=$(whiptail --yesno "Your name: $NAME\nYour email: $EMAIL\nIs this correct?" 12 48 --title "You are" 3>&1 1>&2 2>&3)
+	USER_IS_OK_WITH_THAT=$?
+	echo "User confirms $NAME and $EMAIL? (0 = yes): $USER_IS_OK_WITH_THAT" >> rp_debug.log
 done
+
+echo "Users name set to $NAME" >> rp_debug.log
+echo "Users email set to $EMAIL" >> rp_debug.log
 
 
 # Check if SSH ed25519 keys are present, if not create keys
 updatedb
 mkdir -p /home/"${SUDO_USER}"/.ssh/
-printf "\n${RED}...checking if SSH ed25519 keys are present${NC}\n"
 if ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] || ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ]
 then
 	printf "ed25519 keys not found.\n${RED}...generating keys${NC}\n"
+	echo "SSH ed25519 keys not found. Generating..." >> rp_debug.log
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 	ssh-keygen -t ed25519 -C "$EMAIL" -f /home/"${SUDO_USER}"/.ssh/id_ed25519 -N ""
 	updatedb
 	if [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] && [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ]
 	then
-		printf "${BLUE}SUCCESS: SSH keys created!${NC}\n"
+		echo "SSH ed25519 keys created!" >> rp_debug.log
 	else
-		printf "${RED}FAIL: Cannot create SSH keys!${NC} Error calling ${RED}ssh-keygen -t ed25519 -C \"\$EMAIL\"${NC}\n${RED}...exiting${NC}\n"
+		printf "${RED}FAIL: Cannot create SSH keys! Check rp_debug.log for more info.${NC}\n"
+		echo "FAIL: Cannot create SSH keys! Error calling ssh-keygen -t ed25519 -C \"$EMAIL\"" >> rp_debug.log
 		exit 1
 	fi
 else
-	printf "${BLUE}SUCCESS: ed25519 keys found!${NC}\n"
+	echo "SSH ed25519 keys found!" >> rp_debug.log
 fi
 
 # Start SSH agent and add credentials
-printf "\n${RED}...starting SSH agent${NC}\n"
 eval `ssh-agent -s`
-printf "${RED}...adding your SSH private key to SSH agent${NC}\n"
 ssh-add /home/"${SUDO_USER}"/.ssh/id_ed25519
 if ! [ $? == 0 ]
 then
-	printf "${RED}FAIL: Cannot add your SSH private key to SSH agent${NC}\n${RED}...exiting${NC}\n"
+	echo "Cannot add your SSH private key to SSH agent. Exit status: $?" >> rp_debug.log
 	exit 1
 fi
 chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519
 chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 
+# install xclip
+apt install xclip -y
+
 # Show SSH public key, request to add it to Github, test connection
 ADDED_TO_GITHUB=false
+SSHKEY=$(cat /home/"${SUDO_USER}"/.ssh/id_ed25519.pub)
 until [ "$ADDED_TO_GITHUB" == true ]
 do
-	printf "\n\nThis is your SSH public key. Add it to Github. ${GRAY}( CTRL + INS to copy )${NC}\n\n"
-	cat /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
-	printf "\n\n"
-	read -n 1 -s -r -p "Press any key to proceed..."
+	TESTCONNECTION=1 # Error until not error
+	until [ $TESTCONNECTION == 0 ]
+	do
+		whiptail --yesno "This is your SSH public key. Add it to Github.\n\n$SSHKEY" --title "Your SSH key" --yes-button "Test connection" --no-button "Copy to clipboard" 12 70
+		TESTCONNECTION=$?
+		if [ $TESTCONNECTION == 1 ]
+		then
+			echo $SSHKEY | xclip -sel clip
+		fi
+	done
+
 	ssh -oStrictHostKeyChecking=no -T git@github.com
-	if [ $? == 255 ] # permission denied
+	EXITSTATUS=$?
+	if [ $EXITSTATUS == 255 ] # permission denied
 	then
-		printf "\n${RED}FAIL: Cannot connect to Github! Did you add your SSH key?${NC}"
-	elif [ $? == 1 ] # connected but failed because Github doesn't provide shell
+		whiptail --yesno "Cannot connect to Github! Did you add your SSH key?" --title "FAIL" --yes-button "Try again" --no-button "Exit" 12 48
+		if [ $? -ne 0 ]
+		then
+			exit 1
+		fi
+	elif [ $EXITSTATUS == 1 ] # connected but failed because Github doesn't provide shell
 	then
 		ADDED_TO_GITHUB=true
 	else
-		printf "\n${RED}FAIL: Unexpected error${NC}\n${RED}...exiting${NC}\n"
+		whiptail --msgbox "Unexpected error\nExit status: $EXITSTATUS" --title "FAIL" --ok-button "Exit" 12 48
+		exit $EXITSTATUS
 	fi
 done
-printf "\n${BLUE}SUCCESS: Connected and authenticated on Github!${NC}\n"
+whiptail --msgbox "SUCCESS: Connected and authenticated on Github!" --title "SUCCESS" 12 48
 
 # Update system
 apt update && apt upgrade -y
 
-# Install and setup Git
-printf "\n${RED}...installing Git${NC}\n"
+# Install and config Git
 apt install git-all -y
 if git --version 2>&1 >/dev/null
 then
@@ -147,7 +184,6 @@ else
 	exit 1
 fi
 
-printf "\n${RED}...setting your Git name to ${BLUE}${NAME}${NC}\n"
 git config --global user.name "$NAME"
 if [ $? -ne 0 ]
 then
@@ -228,7 +264,7 @@ NVM_DIR="/home/${SUDO_USER}/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-nvm install 15.12.0
+nvm install 10.24.0
 
 # Install Visual studio code
 wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
