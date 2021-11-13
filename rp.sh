@@ -217,31 +217,25 @@ else
 	exit $?
 fi
 
-git config --global user.name "$NAME"
-if [ $? -ne 0 ]
-then
-	printf "${RED}WARNING: Cannot set Git name! Continuing...${NC}\n"
-	printf "$(date +'%D %T') WARNING: Cannot set Git name! Continuing...\n" >> rp_debug.log
+if ! git config --global user.name "$NAME" ; then
+	printf '%sWARNING: Cannot set Git name! Continuing...%s\n' "${RED}" "${NC}"
+	printf '%s WARNING: Cannot set Git name! Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
 else
-	printf "$(date +'%D %T') Git name set to $NAME\n" >> rp_debug.log
+	printf '%s Git name set to %s\n' "$(date +'%D %T')" "$NAME" >> rp_debug.log
 fi
 
-git config --global user.email "$EMAIL"
-if [ $? -ne 0 ]
-then
-	printf "${RED}WARNING: Cannot set Git email! Continuing...${NC}\n"
-	printf "$(date +'%D %T') WARNING: Cannot set Git email! Continuing...\n" >> rp_debug.log
+if ! git config --global user.email "$EMAIL" ; then
+	printf '%sWARNING: Cannot set Git email! Continuing...%s\n' "${RED}" "${NC}"
+	printf '%s WARNING: Cannot set Git email! Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
 else
-	printf "$(date +'%D %T') Git email set to $EMAIL\n" >> rp_debug.log
+	printf '%s Git email set to %s\n' "$(date +'%D %T')" "$EMAIL" >> rp_debug.log
 fi
 
-git config --global core.autocrlf false
-if [ $? -ne 0 ]
-then
-	printf "${RED}WARNING: Cannot set Git line endings to LF! Continuing...${NC}\n"
-	printf "$(date +'%D %T') WARNING: Cannot set Git line endings to LF!! Continuing...\n" >> rp_debug.log
+if ! git config --global core.autocrlf false ; then
+	printf '%sWARNING: Cannot set Git line endings to LF! Continuing...%s\n' "${RED}" "${NC}"
+	printf '%s WARNING: Cannot set Git line endings to LF!! Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
 else
-	printf "$(date +'%D %T') Git line endings set to LF\n" >> rp_debug.log
+	printf '%s Git line endings set to LF\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
 # Install PHP 7.4
