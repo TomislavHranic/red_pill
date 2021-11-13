@@ -138,25 +138,30 @@ else
 fi
 
 # Start SSH agent and add credentials
-eval "$(ssh-agent -s)"
-ssh-add /home/"${SUDO_USER}"/.ssh/id_ed25519
-if ! [ $? == 0 ] ; then
-	printf "$(date +'%D %T') Cannot add your SSH private key to SSH agent. Exit status: $?\n" >> rp_debug.log
+if ! eval "$(ssh-agent -s)" ; then
+	printf '%s Cannot start SSH agent. Exit status: %s\n' "$(date +'%D %T')" "$?" >> rp_debug.log
 	exit 1
+else
+	printf '%s SSH agent successfully started.\n' "$(date +'%D %T')" >> rp_debug.log
 fi
+if ! ssh-add /home/"${SUDO_USER}"/.ssh/id_ed25519 ; then
+	printf '%s Cannot add your SSH private key to SSH agent. Exit status: %s\n' "$(date +'%D %T')" "$?" >> rp_debug.log
+	exit 1
+else
+	printf '%s SSH private key added to SSH agent.\n' "$(date +'%D %T')" >> rp_debug.log
+fi
+
+# Changing owner of ssh keys
 chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519
 chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 
 # Install Xclip clipboard
-printf "$(date +'%D %T') Installing xclip\n" >> rp_debug.log
-apt install xclip -y
-EXITSTATUS=$?
-if [ $EXITSTATUS -ne 0 ]
-then
-	printf "$(date +'%D %T') WARNING: xclip installation failed. Continuing...\n" >> rp_debug.log
-	printf "${RED}WARNING: Xclip clipboard installation failed. Continuing...${NC}\n"
+printf '%s Installing xclip\n' "$(date +'%D %T')" >> rp_debug.log
+if ! apt install xclip -y ; then
+	printf '%s WARNING: xclip installation failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sWARNING: Xclip clipboard installation failed. Continuing...%s\n' "${RED}" "${NC}"
 else
-	printf "$(date +'%D %T') xclip successfully installed\n" >> rp_debug.log
+	printf '%s xclip successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
 # Show SSH public key, request to add it to Github, test connection
@@ -171,52 +176,45 @@ do
 		TESTCONNECTION=$?
 		if [ $TESTCONNECTION == 1 ]
 		then
-			echo $SSHKEY | xclip -sel clip
-			printf "$(date +'%D %T') SSH key copied to clipboard\n" >> rp_debug.log
+			echo "$SSHKEY" | xclip -sel clip
+			printf '%s SSH key copied to clipboard\n' "$(date +'%D %T')" >> rp_debug.log
 		fi
 	done
 
-	printf "$(date +'%D %T') Testing connection to Github\n" >> rp_debug.log
+	printf '%s Testing connection to Github\n' "$(date +'%D %T')" >> rp_debug.log
 	ssh -oStrictHostKeyChecking=no -T git@github.com
 	EXITSTATUS=$?
-	if [ $EXITSTATUS == 255 ] # permission denied
-	then
-		printf "$(date +'%D %T') Cannot connect to Github! Exit status: $EXITSTATUS\n" >> rp_debug.log
-		whiptail --yesno "Cannot connect to Github! Did you add your SSH key?" --title "FAIL" --yes-button "Try again" --no-button "Exit" 12 48
-		if [ $? -ne 0 ]
-		then
-			printf "$(date +'%D %T') User exited\n" >> rp_debug.log
-			exit 1
+	if [ $EXITSTATUS == 255 ] ; then # permission denied
+		printf '%s Cannot connect to Github, permission denied! Exit status: %s\n' "$(date +'%D %T')" "$EXITSTATUS" >> rp_debug.log
+		if ! whiptail --yesno "Cannot connect to Github! Did you add your SSH key?" --title "FAIL" --yes-button "Try again" --no-button "Exit" 12 48 ; then
+			printf '%s User exited\n' "$(date +'%D %T')" >> rp_debug.log
+			exit $EXITSTATUS
 		fi
-	elif [ $EXITSTATUS == 1 ] # connected but failed because Github doesn't provide shell
-	then
+	elif [ $EXITSTATUS == 1 ] ; then # connected but failed because Github doesn't provide shell
 		ADDED_TO_GITHUB=true
 	else
-		printf "$(date +'%D %T') Unexpected error. Exit status: $EXITSTATUS\n" >> rp_debug.log
+		printf '%s Unexpected error. Exit status: %s\n' "$(date +'%D %T')" "$EXITSTATUS" >> rp_debug.log
 		whiptail --msgbox "Unexpected error\nExit status: $EXITSTATUS" --title "FAIL" --ok-button "Exit" 12 48
 		exit $EXITSTATUS
 	fi
 done
 
-printf "$(date +'%D %T') Connected to Github!\n" >> rp_debug.log
+printf '%s Connected to Github!\n' "$(date +'%D %T')" >> rp_debug.log
 whiptail --msgbox "SUCCESS: Connected and authenticated on Github!" --title "SUCCESS" 12 48
 
 # Update system
-printf "$(date +'%D %T') Running system update\n" >> rp_debug.log
+printf '%s Running system update\n' "$(date +'%D %T')" >> rp_debug.log
 apt update && apt upgrade -y
-printf "$(date +'%D %T') System updated\n" >> rp_debug.log
-
 
 # Install and config Git
-printf "$(date +'%D %T') Installing Git\n" >> rp_debug.log
+printf '%s Installing Git\n' "$(date +'%D %T')" >> rp_debug.log
 apt install git-all -y
-if git --version 2>&1 >/dev/null
-then
-	printf "$(date +'%D %T') Git successfully installed\n" >> rp_debug.log
+if git --version >/dev/null 2>&1 ; then
+	printf '%s Git successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 else
-	printf "$(date +'%D %T') FAIL: Git instalation failed! (git --version 2>&1 >/dev/null) did not detect Git\n" >> rp_debug.log
-	printf "${RED}FAIL: Git instalation failed! Check rp_debug.log for more info.${NC}\n"
-	exit 1
+	printf '%s FAIL: Git instalation failed! (git --version >/dev/null 2>&1) did not detect Git\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sFAIL: Git instalation failed! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+	exit $?
 fi
 
 git config --global user.name "$NAME"
