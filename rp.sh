@@ -203,6 +203,15 @@ done
 printf '%s Connected to Github!\n' "$(date +'%D %T')" >> rp_debug.log
 whiptail --msgbox "SUCCESS: Connected and authenticated on Github!" --title "SUCCESS" 12 48
 
+# Remove Xclip clipboard
+printf '%s Removing xclip\n' "$(date +'%D %T')" >> rp_debug.log
+if ! apt purge xclip -y ; then
+	printf '%s WARNING: xclip removal failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sWARNING: Xclip clipboard removal failed. Continuing...%s\n' "${RED}" "${NC}"
+else
+	printf '%s xclip successfully removed\n' "$(date +'%D %T')" >> rp_debug.log
+fi
+
 # Update system
 printf '%s Running system update\n' "$(date +'%D %T')" >> rp_debug.log
 apt update && apt upgrade -y
