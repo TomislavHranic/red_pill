@@ -1,4 +1,5 @@
-#! /bin/bash
+#!/bin/bash
+# shellcheck disable=SC1091
 
 # Initialize variables
 NC='\033[0m'
@@ -58,8 +59,12 @@ printf '\033[0;34m \033[0;32m     \033[0;34m  \033[0;31m :@\033[0;1;30;43m.\033[
 printf '\033[0;34m  \033[0;32m    \033[0;34m   \033[0;32m.;@\033[0;1;30;43mS\033[0;35mS\033[0;33m:\033[0;33;47m8\033[0;1;33;47m8\033[0;37;43m@\033[0;33;47m88\033[0;1;33;47m8\033[0;1;33;43m;\033[0;1;31;43m888\033[0;1;30;43m;\033[0;31;43m8\033[0;33;42m8\033[0;31;43m8XS\033[0;1;33;43m.\033[0;33;47m88\033[0;1;31;43m8\033[0;1;37;47m \033[0;30;41mS\033[0;34m.                      \033[0;31mversion date: %s\n' "$VERDATE"
 printf '\033[0;34m  \033[0;32m   \033[0;34m    \033[0;32m \033[0;31m.:.X\033[0;33m8@S\033[0;1;30;43m8\033[0;33;47m888\033[0;1;33;47m8X\033[0;37;43m@\033[0;1;30;43mX\033[0;31;43mSX8X\033[0;33;41m@\033[0;1;33;43m:\033[0;33;43mt\033[0;33;47m@\033[0;1;33;47m8@\033[0;37;43m8\033[0;35mt\033[0;31mt.\033[0;34m                         \033[0;31m%s\n' "$DMAIL"
 printf '\033[0;34m         \033[0;32m \033[0;31m  \033[0;32m..\033[0;34m  :\033[0;1;30m8\033[0;30m@\033[0;33m88;\033[0;33;47m88\033[0;1;33;47m8\033[0;33;47m888\033[0;1;33;43mS\033[0;33;47m888888\033[0;37;43m8\033[0;1;30;43m8\033[0;31m;      %s\n' "$DGIT"
-printf '\n\033[0;31mTake the red pill?'
+printf '\n\033[0;31mTake the red pill?\033[0m'
 read -r
+clear
+
+# Update apt package list
+apt update
 
 # Start log
 touch rp_debug.log
@@ -214,7 +219,7 @@ fi
 
 # Update system
 printf '%s Running system update\n' "$(date +'%D %T')" >> rp_debug.log
-apt update && apt upgrade -y
+apt upgrade -y
 
 # Install and config Git
 printf '%s Installing Git\n' "$(date +'%D %T')" >> rp_debug.log
@@ -249,45 +254,42 @@ else
 fi
 
 # Install PHP 7.4
-printf "$(date +'%D %T') Installing php7.4-cli\n" >> rp_debug.log
-apt install php7.4-cli -y
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') FAIL: Cannot install PHP 7.4 cli! Error running apt install php7.4-cli -y\n" >> rp_debug.log
-	printf "${RED}FAIL: Cannot install PHP 7.4 cli! Check rp_debug.log for more info.${NC}\n"
+printf '%s Installing php7.4-cli\n' "$(date +'%D %T')" >> rp_debug.log
+if ! apt install php7.4-cli -y ; then
+	printf '%s FAIL: Cannot install PHP 7.4 cli! Error running apt install php7.4-cli -y\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sFAIL: Cannot install PHP 7.4 cli! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
 	exit 1
 fi
-printf "$(date +'%D %T') php7.4-cli successfully installed\n" >> rp_debug.log
-printf "$(date +'%D %T') Installing php7.4-xmlwriter\n" >> rp_debug.log
-apt install php7.4-xmlwriter -y
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') FAIL: Cannot install PHP 7.4 xmlwriter! Error running apt install php7.4-xmlwriter -y\n" >> rp_debug.log
-	printf "${RED}FAIL: Cannot install PHP 7.4 xmlwriter! Check rp_debug.log for more info.${NC}\n"
+
+{
+	printf '%s php7.4-cli successfully installed\n' "$(date +'%D %T')"
+	printf '%s Installing php7.4-xmlwriter\n' "$(date +'%D %T')"
+} >> rp_debug.log
+
+
+if ! apt install php7.4-xmlwriter -y ; then
+	printf '%s FAIL: Cannot install PHP 7.4 xmlwriter! Error running apt install php7.4-xmlwriter -y\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sFAIL: Cannot install PHP 7.4 xmlwriter! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
 	exit 1
 fi
-printf "$(date +'%D %T') php7.4-xmlwriter successfully installed\n" >> rp_debug.log
+	printf '%s php7.4-xmlwriter successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 
 # Install Composer
-printf "$(date +'%D %T') Installing composer\n" >> rp_debug.log
-apt install composer -y
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') FAIL: Cannot install Composer! Error running apt install composer -y\n" >> rp_debug.log
-	printf "${RED}FAIL: Cannot install Composer! Check rp_debug.log for more info.${NC}\n"
+printf '%s Installing composer\n' "$(date +'%D %T')" >> rp_debug.log
+if ! apt install composer -y ; then
+	printf '%s FAIL: Cannot install Composer! Error running apt install composer -y\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sFAIL: Cannot install Composer! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
 	exit 1
 fi
-printf "$(date +'%D %T') composer successfully installed\n" >> rp_debug.log
+printf '%s composer successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 
 # Install coding standards
-printf "$(date +'%D %T') Installing Neuralab coding standards\n" >> rp_debug.log
-su "$SUDO_USER" -c "composer global require neuralab/coding-standards:dev-master"
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') WARNING: Cannot install Neuralab coding standards! Error running composer global require neuralab/coding-standards:dev-master Continuing...\n" >> rp_debug.log
-	printf "${RED}WARNING: Cannot install Neuralab coding standards! Continuing...${NC}\n"
+printf '%s Installing Neuralab coding standards\n' "$(date +'%D %T')" >> rp_debug.log
+if ! su "$SUDO_USER" -c "composer global require neuralab/coding-standards:dev-master" ; then
+	printf '%s WARNING: Cannot install Neuralab coding standards! Error running composer global require neuralab/coding-standards:dev-master Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sWARNING: Cannot install Neuralab coding standards! Continuing...%s\n' "${RED}" "${NC}"
 else
-	printf "$(date +'%D %T') Neuralab coding standards successfully installed\n" >> rp_debug.log
+	printf '%s Neuralab coding standards successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
 # Check if phpcs added to path
@@ -299,30 +301,26 @@ then
 fi
 
 # Install Node version manager
-printf "$(date +'%D %T') Installing Node Version Manager\n" >> rp_debug.log
+printf '%s Installing Node Version Manager\n' "$(date +'%D %T')" >> rp_debug.log
 su "$SUDO_USER" -c "wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
 
 NVM_DIR="/home/${SUDO_USER}/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-command -v nvm
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') FAIL: Something went wrong. Cannot run nvm command!\n" >> rp_debug.log
-	printf "${RED}Something went wrong. Cannot run nvm command!${NC}\n"
+if ! command -v nvm ; then
+	printf '%s FAIL: Something went wrong. Cannot run nvm command!\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sSomething went wrong. Cannot run nvm command!%s\n' "${RED}" "${NC}"
 	exit 1
 else
-	printf "$(date +'%D %T') nvm command available\n" >> rp_debug.log
+	printf '%s nvm command available\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
-printf "$(date +'%D %T') Installing Node 10.24.0\n" >> rp_debug.log
-nvm install 10.24.0
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') WARNING: Cannot install Node. nvm install 10.24.0 failed. Continuing...\n" >> rp_debug.log
+printf '%s Installing Node 10.24.0\n' "$(date +'%D %T')" >> rp_debug.log
+if ! nvm install 10.24.0 ; then
+	printf '%s WARNING: Cannot install Node. nvm install 10.24.0 failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
 else
-	printf "$(date +'%D %T') Node 10.24.0 successfully installed\n" >> rp_debug.log
+	printf '%s Node 10.24.0 successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
 printf "$(date +'%D %T') Use Node 10.24.0 \n" >> rp_debug.log
