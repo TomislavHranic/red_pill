@@ -1,23 +1,37 @@
 #! /bin/bash
 
+# Initialize variables
 NC='\033[0m'
 RED='\033[0;31m'
 EXITSTATUS=1 # Error unless it's not an error
+DMAIL="tomislav@neuralab.net"
+DGIT="https://github.com/TomislavHranicNeuralab"
+VERSION="v0.0.3"
+SCRIPT_NAME="Red Pill"
+VERDATE="13-Nov-2021"
+USER_IS_OK_WITH_THAT=1 # He's not until he is
+EMAIL=""
+USER_SAID_OK=""
+
+# Whiptail colors
+export NEWT_COLORS='
+root=red,black
+window=,red
+border=white,red
+textbox=white,red
+button=white,black
+actbutton=black,white
+entry=white,black
+'
 
 # Check if root
-if [ "$EUID" -ne 0 ]
-then
+if [ "$EUID" -ne 0 ] ; then
 	printf '%sFAIL: Run as root!%s\n' "$RED" "$NC"
 	printf "Run command: sudo bash rp.sh\n"
 	exit 1
 fi
 
-DMAIL="tomislav@neuralab.net"
-DGIT="https://github.com/TomislavHranicNeuralab"
-VERSION="v0.0.2"
-SCRIPT_NAME="Red Pill"
-VERDATE="12-Nov-2021"
-
+# Display ascii art
 clear
 printf '\033[0;34m                                          \033[0;32m   \033[0;34m \033[0;32m     \033[0;34m         \033[0m\n'
 printf '\033[0;34m        \033[0;31m    \033[0;32m \033[0;34m  \033[0;31m      \033[0;34m                 \033[0;31m \033[0;32m \033[0;31m.@X8\033[0;33m8\033[0;31m8\033[0;32mS\033[0;31m;\033[0;32m     \033[0;34m       \033[0m\n'
@@ -47,17 +61,6 @@ printf '\033[0;34m         \033[0;32m \033[0;31m  \033[0;32m..\033[0;34m  :\033[
 printf '\n\033[0;31mTake the red pill?'
 read -r
 
-# Whiptail colors
-export NEWT_COLORS='
-root=red,black
-window=,red
-border=white,red
-textbox=white,red
-button=white,black
-actbutton=black,white
-entry=white,black
-'
-
 # Start log
 touch rp_debug.log
 {
@@ -68,72 +71,76 @@ touch rp_debug.log
 } >> rp_debug.log
 
 # Get user info with whiptail
-USER_IS_OK_WITH_THAT=1
-until [ "$USER_IS_OK_WITH_THAT" == 0 ]
+until [ $USER_IS_OK_WITH_THAT -eq 0 ]
 do
 	NAME=$(whiptail --inputbox "Enter your name. Use your full name, not your nickname or just your first name. Your full legal name. If you get stuck check your passport :)" 12 48 --title "Your name" --cancel-button "Exit" 3>&1 1>&2 2>&3)
 	EXITSTATUS=$?
-	if [ $EXITSTATUS -ne 0 ]
-	then
+	if [ $EXITSTATUS -ne 0 ] ; then
 		printf '%s Exited on name entering dialog. Exit status: %s\n' "$(date +'%D %T')" "$EXITSTATUS" >> rp_debug.log
 		exit $EXITSTATUS
 	fi
 	printf '%s User successfully entered name %s\n' "$(date +'%D %T')" "$NAME" >> rp_debug.log
 
-	EMAIL=""
 	until [[ "$EMAIL" =~ @neuralab.net$ ]]
 	do
 		EMAIL=$(whiptail --inputbox "Enter your email. Use your official Neuralab email, not your private Gmail, Yahoo, Hotmail. If you get stuck check if your email has the word \"neuralab\" in it :)" 12 48 --title "Your email" --cancel-button "Exit" 3>&1 1>&2 2>&3)
 		EXITSTATUS=$?
-		if [ $EXITSTATUS -ne 0 ]
-		then
+		if [ $EXITSTATUS -ne 0 ] ; then
 			printf '%s Exited on email entering dialog. Exit status: %s\n' "$(date +'%D %T')" "$EXITSTATUS" >> rp_debug.log
 			exit $EXITSTATUS
-		elif [[ ! "$EMAIL" =~ @neuralab.net$ ]]
-		then
-			printf "$(date +'%D %T') User entered a non @neuralab.net email address $EMAIL\n" >> rp_debug.log
+		elif [[ ! "$EMAIL" =~ @neuralab.net$ ]] ; then
+			printf '%s User entered a non @neuralab.net email address %s\n' "$(date +'%D %T')" "$EMAIL" >> rp_debug.log
 			whiptail --msgbox "$EMAIL is not an @neuralab.net email!" --title "FAIL" 12 48
 		fi
 	done
+	printf '%s User successfully entered email address %s\n' "$(date +'%D %T')" "$EMAIL" >> rp_debug.log
 
-	printf "$(date +'%D %T') User successfully entered email address $EMAIL\n" >> rp_debug.log
-	USER_IS_OK_WITH_THAT=$(whiptail --yesno "Your name: $NAME\nYour email: $EMAIL\nIs this correct?" 12 48 --title "You are" 3>&1 1>&2 2>&3)
+	whiptail --yesno "Your name: $NAME\nYour email: $EMAIL\nIs this correct?" 12 48 --title "You are" 3>&1 1>&2 2>&3
 	USER_IS_OK_WITH_THAT=$?
-	printf "$(date +'%D %T') User confirms $NAME and $EMAIL? (0 = yes): $USER_IS_OK_WITH_THAT\n" >> rp_debug.log
+	case $USER_IS_OK_WITH_THAT in
+		0)
+			USER_SAID_OK="YES"
+			;;
+		1)
+			USER_SAID_OK="NO"
+			;;
+		*)
+			USER_SAID_OK="Dont know. Something went wrong :/"
+			;;
+	esac
+	printf '%s User confirms %s and %s? - %s\n' "$(date +'%D %T')" "$NAME" "$EMAIL" "$USER_SAID_OK" >> rp_debug.log
 done
 
-printf "$(date +'%D %T') Users name set to $NAME\n" >> rp_debug.log
-printf "$(date +'%D %T') Users email set to $EMAIL\n" >> rp_debug.log
-
+{
+printf '%s Users name set to %s\n' "$(date +'%D %T')" "$NAME"
+printf '%s Users email set to %s\n' "$(date +'%D %T')" "$EMAIL"
+} >> rp_debug.log
 
 # Check if SSH ed25519 keys are present, if not create keys
 updatedb
 mkdir -p /home/"${SUDO_USER}"/.ssh/
-if ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] || ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ]
-then
-	printf "ed25519 keys not found.\n${RED}...generating keys${NC}\n"
-	printf "$(date +'%D %T') SSH ed25519 keys not found. Generating...\n" >> rp_debug.log
+if ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] || ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ] ; then
+	printf 'ed25519 keys not found.\n%s...generating keys%s\n' "${RED}" "${NC}"
+	printf '%s SSH ed25519 keys not found. Generating...\n' "$(date +'%D %T')" >> rp_debug.log
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 	ssh-keygen -t ed25519 -C "$EMAIL" -f /home/"${SUDO_USER}"/.ssh/id_ed25519 -N ""
 	updatedb
-	if [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] && [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ]
-	then
-		printf "$(date +'%D %T') SSH ed25519 keys created!\n" >> rp_debug.log
+	if [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] && [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ] ; then
+		printf '%s SSH ed25519 keys created!\n' "$(date +'%D %T')" >> rp_debug.log
 	else
-		printf "${RED}FAIL: Cannot create SSH keys! Check rp_debug.log for more info.${NC}\n"
-		printf "$(date +'%D %T') FAIL: Cannot create SSH keys! Error running ssh-keygen -t ed25519 -C \"$EMAIL\"\n" >> rp_debug.log
+		printf '%sFAIL: Cannot create SSH keys! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+		printf '%s FAIL: Cannot create SSH keys! Error running ssh-keygen -t ed25519 -C \"%s\"\n' "$(date +'%D %T')" "$EMAIL" >> rp_debug.log
 		exit 1
 	fi
 else
-	printf "$(date +'%D %T') SSH ed25519 keys found!\n" >> rp_debug.log
+	printf '%s SSH ed25519 keys found!\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
 # Start SSH agent and add credentials
-eval `ssh-agent -s`
+eval "$(ssh-agent -s)"
 ssh-add /home/"${SUDO_USER}"/.ssh/id_ed25519
-if ! [ $? == 0 ]
-then
+if ! [ $? == 0 ] ; then
 	printf "$(date +'%D %T') Cannot add your SSH private key to SSH agent. Exit status: $?\n" >> rp_debug.log
 	exit 1
 fi
