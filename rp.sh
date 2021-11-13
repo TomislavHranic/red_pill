@@ -152,8 +152,8 @@ else
 fi
 
 # Changing owner of ssh keys
-chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519
-chown -v $SUDO_USER /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
+chown -v "$SUDO_USER" /home/"${SUDO_USER}"/.ssh/id_ed25519
+chown -v "$SUDO_USER" /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 
 # Install Xclip clipboard
 printf '%s Installing xclip\n' "$(date +'%D %T')" >> rp_debug.log
@@ -182,6 +182,7 @@ do
 	done
 
 	printf '%s Testing connection to Github\n' "$(date +'%D %T')" >> rp_debug.log
+	su "$SUDO_USER" -c "ssh -oStrictHostKeyChecking=no -T git@github.com" # Create and add to users known hosts
 	ssh -oStrictHostKeyChecking=no -T git@github.com
 	EXITSTATUS=$?
 	if [ $EXITSTATUS == 255 ] ; then # permission denied
