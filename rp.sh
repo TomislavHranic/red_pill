@@ -323,17 +323,15 @@ else
 	printf '%s Node 10.24.0 successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
-printf "$(date +'%D %T') Use Node 10.24.0 \n" >> rp_debug.log
-nvm use 10.24.0
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') WARNING: Cannot use Node 10.24.0. nvm use 10.24.0 failed. Continuing...\n" >> rp_debug.log
+printf '%s Use Node 10.24.0 \n' "$(date +'%D %T')" >> rp_debug.log
+if ! nvm use 10.24.0 ; then
+	printf '%s WARNING: Cannot use Node 10.24.0. nvm use 10.24.0 failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
 else
-	printf "$(date +'%D %T') Using Node 10.24.0\n" >> rp_debug.log
+	printf '%s Using Node 10.24.0\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
 # Install Visual Studio Code
-printf "$(date +'%D %T') Installing Visual Studio Code\n" >> rp_debug.log
+printf '%s Installing Visual Studio Code\n' "$(date +'%D %T')" >> rp_debug.log
 wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
 install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
 sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
@@ -341,75 +339,62 @@ rm -f packages.microsoft.gpg
 
 apt install apt-transport-https
 apt update
-apt install code
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') WARNING: Visual Studio Code installation failed. Continuing...\n" >> rp_debug.log
+if ! apt install code ; then
+	printf '%s WARNING: Visual Studio Code installation failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
 else
-	printf "$(date +'%D %T') Visual Studio Code successfully installed\n" >> rp_debug.log
+	printf '%s Visual Studio Code successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
 
 # Install Virtual box
-printf "$(date +'%D %T') Installing virtualbox\n" >> rp_debug.log
-apt install virtualbox -y
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') FAIL: virtualbox installation failed. Error running apt install virtualbox -y\n" >> rp_debug.log
-	printf "${RED}Something went wrong. Virtualbox installation failed!${NC}\n"
+printf '%s Installing virtualbox\n' "$(date +'%D %T')" >> rp_debug.log
+if ! apt install virtualbox -y ; then
+	printf '%s FAIL: virtualbox installation failed. Error running apt install virtualbox -y\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sSomething went wrong. Virtualbox installation failed!%s\n' "${RED}" "${NC}"
 	exit 1
 else
-	printf "$(date +'%D %T') virtualbox successfully installed\n" >> rp_debug.log
+	printf '%s virtualbox successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
-printf "$(date +'%D %T') Installing virtualbox-guest-additions-iso\n" >> rp_debug.log
-apt install virtualbox-guest-additions-iso -y
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') FAIL: virtualbox-guest-additions-iso installation failed. Error running apt install virtualbox-guest-additions-iso -y\n" >> rp_debug.log
-	printf "${RED}Something went wrong. Virtualbox guest additions installation failed!${NC}\n"
+printf '%s Installing virtualbox-guest-additions-iso\n' "$(date +'%D %T')" >> rp_debug.log
+if ! apt install virtualbox-guest-additions-iso -y ; then
+	printf '%s FAIL: virtualbox-guest-additions-iso installation failed. Error running apt install virtualbox-guest-additions-iso -y\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sSomething went wrong. Virtualbox guest additions installation failed!%s\n' "${RED}" "${NC}"
 	exit 1
 else
-	printf "$(date +'%D %T') virtualbox-guest-additions-iso successfully installed\n" >> rp_debug.log
+	printf '%s virtualbox-guest-additions-iso successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
 # Install Vagrant
-printf "$(date +'%D %T') Installing vagrant\n" >> rp_debug.log
-apt install vagrant -y
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') FAIL: vagrant installation failed. Error running apt install vagrant -y\n" >> rp_debug.log
-	printf "${RED}Something went wrong. Vagrant installation failed!${NC}\n"
+printf '%s Installing vagrant\n' "$(date +'%D %T')" >> rp_debug.log
+if ! apt install vagrant -y ; then
+	printf '%s FAIL: vagrant installation failed. Error running apt install vagrant -y\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sSomething went wrong. Vagrant installation failed!%s\n' "${RED}" "${NC}"
 	exit 1
 else
-	printf "$(date +'%D %T') vagrant successfully installed\n" >> rp_debug.log
+	printf '%s vagrant successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
-printf "$(date +'%D %T') Installing vagrant-bindfs\n" >> rp_debug.log
-vagrant plugin install vagrant-bindfs
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') FAIL: vagrant-bindfs installation failed. Error running vagrant plugin install vagrant-bindfs\n" >> rp_debug.log
-	printf "${RED}Something went wrong. Vagrant plugin bindfs installation failed!${NC}\n"
+printf '%s Installing vagrant-bindfs\n' "$(date +'%D %T')" >> rp_debug.log
+if ! vagrant plugin install vagrant-bindfs ; then
+	printf '%s FAIL: vagrant-bindfs installation failed. Error running vagrant plugin install vagrant-bindfs\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sSomething went wrong. Vagrant plugin bindfs installation failed!%s\n' "${RED}" "${NC}"
 	exit 1
 else
-	printf "$(date +'%D %T') vagrant-bindfs successfully installed\n" >> rp_debug.log
+	printf '%s vagrant-bindfs successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
-
-printf "$(date +'%D %T') Installing vagrant-faster\n" >> rp_debug.log
-vagrant plugin install vagrant-faster
-if [ $? -ne 0 ]
-then
-	printf "$(date +'%D %T') FAIL: vagrant-faster installation failed. Error running vagrant plugin install vagrant-faster\n" >> rp_debug.log
-	printf "${RED}Something went wrong. Vagrant plugin fasater installation failed!${NC}\n"
+printf '%s Installing vagrant-faster\n' "$(date +'%D %T')" >> rp_debug.log
+if ! vagrant plugin install vagrant-faster ; then
+	printf '%s FAIL: vagrant-faster installation failed. Error running vagrant plugin install vagrant-faster\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%sSomething went wrong. Vagrant plugin fasater installation failed!%s\n' "${RED}" "${NC}"
 	exit 1
 else
-	printf "$(date +'%D %T') vagrant-faster successfully installed\n" >> rp_debug.log
+	printf '%s vagrant-faster successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
 # Install homestead
-printf "$(date +'%D %T') Installing homestead\n" >> rp_debug.log
+printf '%s Installing homestead\n' "$(date +'%D %T')" >> rp_debug.log
 git clone https://github.com/laravel/homestead.git /home/$SUDO_USER/homestead
 cd /home/$SUDO_USER/homestead && git checkout release && bash init.sh
 
@@ -430,7 +415,7 @@ echo "192.168.10.10 dev.neuralab.test" >> /etc/hosts
 
 mkdir /home/$SUDO_USER/www
 chown -R $SUDO_USER /home/$SUDO_USER/www
-printf "$(date +'%D %T') Homestead installed\n" >> rp_debug.log
+printf '%s Homestead installed\n' "$(date +'%D %T')" >> rp_debug.log
 
 whiptail --msgbox "Your dev env is installed\nClone reporitories to:\n     ~/www/\nAdd sites to:\n   ~/homestead/Homestead.yaml\n     /etc/hosts\nReopen terminal and run:\n     \"homestead up --provision\"\n\nDanke schön!" --title "Installed!" 16 60
 exit 0
