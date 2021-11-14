@@ -395,8 +395,8 @@ fi
 
 # Install homestead
 printf '%s Installing homestead\n' "$(date +'%D %T')" >> rp_debug.log
-git clone https://github.com/laravel/homestead.git /home/$SUDO_USER/homestead
-cd /home/$SUDO_USER/homestead && git checkout release && bash init.sh
+git clone https://github.com/laravel/homestead.git /home/"$SUDO_USER"/homestead
+cd /home/"$SUDO_USER"/homestead && git checkout release && bash init.sh
 
 echo "function homestead() { ( cd ~/homestead && vagrant "\$\@" ) }" >> /home/"$SUDO_USER"/.bashrc
 echo "export -f homestead" >> /home/"$SUDO_USER"/.bashrc
@@ -409,12 +409,12 @@ sed -i -r '/^provider:/a variables:' /home/"$SUDO_USER"/homestead/Homestead.yaml
 sed -i -r '/^variables:/a \ \ \ \ - key: IS_HOMESTEAD' /home/"$SUDO_USER"/homestead/Homestead.yaml
 sed -i -r '/IS_HOMESTEAD/a \ \ \ \ \ \ value: "true"' /home/"$SUDO_USER"/homestead/Homestead.yaml
 
-chown -R $SUDO_USER /home/$SUDO_USER/homestead
+chown -R "$SUDO_USER" /home/"$SUDO_USER"/homestead
 
 echo "192.168.10.10 dev.neuralab.test" >> /etc/hosts
 
-mkdir /home/$SUDO_USER/www
-chown -R $SUDO_USER /home/$SUDO_USER/www
+mkdir /home/"$SUDO_USER"/www
+chown -R "$SUDO_USER" /home/"$SUDO_USER"/www
 printf '%s Homestead installed\n' "$(date +'%D %T')" >> rp_debug.log
 
 whiptail --msgbox "Your dev env is installed\nClone reporitories to:\n     ~/www/\nAdd sites to:\n   ~/homestead/Homestead.yaml\n     /etc/hosts\nReopen terminal and run:\n     \"homestead up --provision\"\n\nDanke schön!" --title "Installed!" 16 60
