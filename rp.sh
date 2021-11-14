@@ -157,8 +157,8 @@ else
 fi
 
 # Changing owner of ssh keys
-chown -v "$SUDO_USER" /home/"${SUDO_USER}"/.ssh/id_ed25519
-chown -v "$SUDO_USER" /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
+chown "$SUDO_USER" /home/"${SUDO_USER}"/.ssh/id_ed25519
+chown "$SUDO_USER" /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 
 # Install Xclip clipboard
 printf '%s Installing xclip\n' "$(date +'%D %T')" >> rp_debug.log
@@ -297,7 +297,7 @@ phpcs -i
 # If comannd not found then add to path:
 if [ $? == 127 ]
 then
-	echo "export PATH=\"\$HOME/.composer/vendor/bin:\$PATH\"" >> /home/"$SUDO_USER"/.bashrc
+	printf "export PATH=\"\$HOME/.composer/vendor/bin:\$PATH\"\n" >> /home/"$SUDO_USER"/.bashrc
 fi
 
 # Install Node version manager
@@ -398,8 +398,8 @@ printf '%s Installing homestead\n' "$(date +'%D %T')" >> rp_debug.log
 git clone https://github.com/laravel/homestead.git /home/"$SUDO_USER"/homestead
 cd /home/"$SUDO_USER"/homestead && git checkout release && bash init.sh
 
-echo "function homestead() { ( cd ~/homestead && vagrant "\$\@" ) }" >> /home/"$SUDO_USER"/.bashrc
-echo "export -f homestead" >> /home/"$SUDO_USER"/.bashrc
+printf "function homestead() { ( cd ~/homestead && vagrant \"\$@\" ) }\n" >> /home/"$SUDO_USER"/.bashrc
+printf "export -f homestead\n" >> /home/"$SUDO_USER"/.bashrc
 
 sed -i '/192.168./c\ip: "192.168.10.10"' /home/"$SUDO_USER"/homestead/Homestead.yaml
 sed -i '/authorize:/c\authorize: ~/.ssh/id_ed25519.pub' /home/"$SUDO_USER"/homestead/Homestead.yaml
@@ -411,7 +411,7 @@ sed -i -r '/IS_HOMESTEAD/a \ \ \ \ \ \ value: "true"' /home/"$SUDO_USER"/homeste
 
 chown -R "$SUDO_USER" /home/"$SUDO_USER"/homestead
 
-echo "192.168.10.10 dev.neuralab.test" >> /etc/hosts
+printf "192.168.10.10 dev.neuralab.test\n" >> /etc/hosts
 
 mkdir /home/"$SUDO_USER"/www
 chown -R "$SUDO_USER" /home/"$SUDO_USER"/www
