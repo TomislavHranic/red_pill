@@ -63,9 +63,6 @@ printf '\n\033[0;31mTake the red pill?\033[0m'
 read -r
 clear
 
-# Update apt package list
-apt update
-
 # Start log
 touch rp_debug.log
 {
@@ -74,6 +71,22 @@ touch rp_debug.log
 	printf 'Version: %s\n' "$VERSION"
 	printf 'Script started %s\n\n' "$(date +'%D %T')"
 } >> rp_debug.log
+
+# Determine linux type to know which package manager to use
+DEBIAN=$(which apt)
+ARCH=$(which pamac)
+if [ ! -z $DEBIAN ] ; then
+	PACKAGE_MNGR="apt"
+elif [ ! -z $ARCH ] ; then
+	PACKAGE_MNGR="pamac"
+else
+		printf '%s FAIL: Unsupported linux type\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sFAIL: Unsupported linux type%s\n' "${RED}" "${NC}" >> rp_debug.log
+		exit 1
+fi
+
+# Update package list
+"$PACKAGE_MNGR" update
 
 # Get user info with whiptail
 until [ $USER_IS_OK_WITH_THAT -eq 0 ]
@@ -162,7 +175,7 @@ chown "$SUDO_USER" /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 
 # Install Xclip clipboard
 printf '%s Installing xclip\n' "$(date +'%D %T')" >> rp_debug.log
-if ! apt install xclip -y ; then
+if ! "$PACKAGE_MNGR" install xclip -y ; then
 	printf '%s WARNING: xclip installation failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
 	printf '%sWARNING: Xclip clipboard installation failed. Continuing...%s\n' "${RED}" "${NC}"
 else
@@ -210,7 +223,7 @@ whiptail --msgbox "SUCCESS: Connected and authenticated on Github!" --title "SUC
 
 # Remove Xclip clipboard
 printf '%s Removing xclip\n' "$(date +'%D %T')" >> rp_debug.log
-if ! apt purge xclip -y ; then
+if ! "$PACKAGE_MNGR" purge xclip -y ; then
 	printf '%s WARNING: xclip removal failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
 	printf '%sWARNING: Xclip clipboard removal failed. Continuing...%s\n' "${RED}" "${NC}"
 else
@@ -219,11 +232,11 @@ fi
 
 # Update system
 printf '%s Running system update\n' "$(date +'%D %T')" >> rp_debug.log
-apt upgrade -y
+"$PACKAGE_MNGR" upgrade -y
 
 # Install and config Git
 printf '%s Installing Git\n' "$(date +'%D %T')" >> rp_debug.log
-apt install git-all -y
+"$PACKAGE_MNGR" install git-all -y
 if git --version >/dev/null 2>&1 ; then
 	printf '%s Git successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 else
@@ -255,7 +268,7 @@ fi
 
 # Install PHP 7.4
 printf '%s Installing php7.4-cli\n' "$(date +'%D %T')" >> rp_debug.log
-if ! apt install php7.4-cli -y ; then
+if ! "$PACKAGE_MNGR" install php7.4-cli -y ; then
 	printf '%s FAIL: Cannot install PHP 7.4 cli! Error running apt install php7.4-cli -y\n' "$(date +'%D %T')" >> rp_debug.log
 	printf '%sFAIL: Cannot install PHP 7.4 cli! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
 	exit 1
@@ -267,7 +280,7 @@ fi
 } >> rp_debug.log
 
 
-if ! apt install php7.4-xmlwriter -y ; then
+if ! "$PACKAGE_MNGR" install php7.4-xmlwriter -y ; then
 	printf '%s FAIL: Cannot install PHP 7.4 xmlwriter! Error running apt install php7.4-xmlwriter -y\n' "$(date +'%D %T')" >> rp_debug.log
 	printf '%sFAIL: Cannot install PHP 7.4 xmlwriter! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
 	exit 1
@@ -276,7 +289,7 @@ fi
 
 # Install Composer
 printf '%s Installing composer\n' "$(date +'%D %T')" >> rp_debug.log
-if ! apt install composer -y ; then
+if ! "$PACKAGE_MNGR" install composer -y ; then
 	printf '%s FAIL: Cannot install Composer! Error running apt install composer -y\n' "$(date +'%D %T')" >> rp_debug.log
 	printf '%sFAIL: Cannot install Composer! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
 	exit 1
@@ -331,24 +344,27 @@ else
 fi
 
 # Install Visual Studio Code
-printf '%s Installing Visual Studio Code\n' "$(date +'%D %T')" >> rp_debug.log
-wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
-install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
-sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
-rm -f packages.microsoft.gpg
+if [ ! -z $DEBIAN ] ; then
+	printf '%s Installing Visual Studio Code\n' "$(date +'%D %T')" >> rp_debug.log
+	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+	install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
+	sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+	m -f packages.microsoft.gpg
 
-apt install apt-transport-https
-apt update
-if ! apt install code ; then
-	printf '%s WARNING: Visual Studio Code installation failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+	apt install apt-transport-https
+	apt update
+	if ! apt install code ; then
+		printf '%s WARNING: Visual Studio Code installation failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+	else
+		printf '%s Visual Studio Code successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
 else
-	printf '%s Visual Studio Code successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	printf '%s Visual Studio Code installation for ARCH currently in development\n' "$(date +'%D %T')" >> rp_debug.log
 fi
-
 
 # Install Virtual box
 printf '%s Installing virtualbox\n' "$(date +'%D %T')" >> rp_debug.log
-if ! apt install virtualbox -y ; then
+if ! "$PACKAGE_MNGR" install virtualbox -y ; then
 	printf '%s FAIL: virtualbox installation failed. Error running apt install virtualbox -y\n' "$(date +'%D %T')" >> rp_debug.log
 	printf '%sSomething went wrong. Virtualbox installation failed!%s\n' "${RED}" "${NC}"
 	exit 1
@@ -357,7 +373,7 @@ else
 fi
 
 printf '%s Installing virtualbox-guest-additions-iso\n' "$(date +'%D %T')" >> rp_debug.log
-if ! apt install virtualbox-guest-additions-iso -y ; then
+if ! "$PACKAGE_MNGR" install virtualbox-guest-additions-iso -y ; then
 	printf '%s FAIL: virtualbox-guest-additions-iso installation failed. Error running apt install virtualbox-guest-additions-iso -y\n' "$(date +'%D %T')" >> rp_debug.log
 	printf '%sSomething went wrong. Virtualbox guest additions installation failed!%s\n' "${RED}" "${NC}"
 	exit 1
@@ -367,7 +383,7 @@ fi
 
 # Install Vagrant
 printf '%s Installing vagrant\n' "$(date +'%D %T')" >> rp_debug.log
-if ! apt install vagrant -y ; then
+if ! "$PACKAGE_MNGR" install vagrant -y ; then
 	printf '%s FAIL: vagrant installation failed. Error running apt install vagrant -y\n' "$(date +'%D %T')" >> rp_debug.log
 	printf '%sSomething went wrong. Vagrant installation failed!%s\n' "${RED}" "${NC}"
 	exit 1
