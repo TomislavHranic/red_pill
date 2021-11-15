@@ -75,9 +75,9 @@ touch rp_debug.log
 # Determine linux type to know which package manager to use
 DEBIAN=$(which apt)
 ARCH=$(which pamac)
-if [ ! -z $DEBIAN ] ; then
+if [ -n "$DEBIAN" ] ; then
 	PACKAGE_MNGR="apt"
-elif [ ! -z $ARCH ] ; then
+elif [ -n "$ARCH" ] ; then
 	PACKAGE_MNGR="pamac"
 else
 		printf '%s FAIL: Unsupported linux type\n' "$(date +'%D %T')" >> rp_debug.log
@@ -344,7 +344,7 @@ else
 fi
 
 # Install Visual Studio Code
-if [ ! -z $DEBIAN ] ; then
+if [ -n "$DEBIAN" ] ; then
 	printf '%s Installing Visual Studio Code\n' "$(date +'%D %T')" >> rp_debug.log
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
 	install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
