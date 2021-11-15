@@ -25,6 +25,6 @@ Download or clone repository and run the script with `sudo bash rp.sh`
 
 ## Tested on
 
-Mint 20.2 - [OK]
-Ubuntu 20.04.3 - [OK]
-MX 21 - [testing...]
+Mint 20.2 - `OK`
+Ubuntu 20.04.3 - `OK`
+MX 21 - `testing...`
