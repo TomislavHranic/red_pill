@@ -172,14 +172,14 @@ fi
 # Show SSH public key, request to add it to Github, test connection
 ADDED_TO_GITHUB=false
 SSHKEY=$(cat /home/"${SUDO_USER}"/.ssh/id_ed25519.pub)
-until [ "$ADDED_TO_GITHUB" == true ]
+until $ADDED_TO_GITHUB
 do
 	TESTCONNECTION=1 # Error until not error
-	until [ $TESTCONNECTION == 0 ]
+	until [ $TESTCONNECTION -eq 0 ]
 	do
 		whiptail --yesno "This is your SSH public key. Add it to Github.\n\n$SSHKEY" --title "Your SSH key" --yes-button "Test connection" --no-button "Copy to clipboard" 12 70
 		TESTCONNECTION=$?
-		if [ $TESTCONNECTION == 1 ]
+		if [ $TESTCONNECTION -eq 1 ]
 		then
 			echo "$SSHKEY" | xclip -sel clip
 			printf '%s SSH key copied to clipboard\n' "$(date +'%D %T')" >> rp_debug.log
@@ -190,13 +190,13 @@ do
 	su "$SUDO_USER" -c "ssh -oStrictHostKeyChecking=no -T git@github.com" # Create and add to users known hosts
 	ssh -oStrictHostKeyChecking=no -T git@github.com
 	EXITSTATUS=$?
-	if [ $EXITSTATUS == 255 ] ; then # permission denied
+	if [ $EXITSTATUS -eq 255 ] ; then # permission denied
 		printf '%s Cannot connect to Github, permission denied! Exit status: %s\n' "$(date +'%D %T')" "$EXITSTATUS" >> rp_debug.log
 		if ! whiptail --yesno "Cannot connect to Github! Did you add your SSH key?" --title "FAIL" --yes-button "Try again" --no-button "Exit" 12 48 ; then
 			printf '%s User exited\n' "$(date +'%D %T')" >> rp_debug.log
 			exit $EXITSTATUS
 		fi
-	elif [ $EXITSTATUS == 1 ] ; then # connected but failed because Github doesn't provide shell
+	elif [ $EXITSTATUS -eq 1 ] ; then # connected but failed because Github doesn't provide shell
 		ADDED_TO_GITHUB=true
 	else
 		printf '%s Unexpected error. Exit status: %s\n' "$(date +'%D %T')" "$EXITSTATUS" >> rp_debug.log
@@ -295,7 +295,7 @@ fi
 # Check if phpcs added to path
 phpcs -i
 # If comannd not found then add to path:
-if [ $? == 127 ]
+if [ $? -eq 127 ]
 then
 	printf "export PATH=\"\$HOME/.composer/vendor/bin:\$PATH\"\n" >> /home/"$SUDO_USER"/.bashrc
 fi
