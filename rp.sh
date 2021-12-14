@@ -73,13 +73,11 @@ touch rp_debug.log
 	printf 'Script started %s\n\n' "$(date +'%D %T')"
 } >> rp_debug.log
 
-# Determine linux type to know which package manager to use
-DEBIAN=$(which apt)
-ARCH=$(which pamac)
-if [ -n "$DEBIAN" ] ; then
+# Determine which package manager to use
+if [ "$(command -v apt)" ]; then
 	PACKAGE_MNGR="apt"
-elif [ -n "$ARCH" ] ; then
-	PACKAGE_MNGR="pamac"
+elif [ "$(command -v pacman)" ]; then
+	PACKAGE_MNGR="pacman"
 else
 		printf '%s FAIL: Unsupported linux type\n' "$(date +'%D %T')" >> rp_debug.log
 		printf '%sFAIL: Unsupported linux type%s\n' "${RED}" "${NC}" >> rp_debug.log
@@ -87,7 +85,15 @@ else
 fi
 
 # Update package list
-"$PACKAGE_MNGR" update
+if [ $PACKAGE_MNGR = 'apt' ]; then
+	apt update
+elif [ $PACKAGE_MNGR = 'pacman' ]; then
+	# $PACKAGE_MNGR -Sc --noconfirm # Remove unused packages from cache and unused sync dbs.
+	# pacman-mirrors --fasttrack # Update mirrorlist and choose fastest mirrors - takes time
+	pacman -D --asexplicit lsof lib32-alsa-plugins zenity # Don't remove these when removing Steam
+	pacman -Rsn steam-manjaro --noconfirm # Remove Steam
+	pacman -Rsn yakuake --noconfirm # Remove annoying dropdown folating terminal
+fi
 
 # Get user info with whiptail
 until [ $USER_IS_OK_WITH_THAT -eq 0 ]
@@ -136,15 +142,15 @@ printf '%s Users email set to %s\n' "$(date +'%D %T')" "$EMAIL"
 } >> rp_debug.log
 
 # Check if SSH ed25519 keys are present, if not create keys
-updatedb
-mkdir -p /home/"${SUDO_USER}"/.ssh/
+updatedb # update db used by locate
+mkdir -p /home/"${SUDO_USER}"/.ssh/ # -p: creates dir only if it doesnt exist
 if ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] || ! [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ] ; then
 	printf 'ed25519 keys not found.\n%s...generating keys%s\n' "${RED}" "${NC}"
 	printf '%s SSH ed25519 keys not found. Generating...\n' "$(date +'%D %T')" >> rp_debug.log
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519
 	rm -f /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 	ssh-keygen -t ed25519 -C "$EMAIL" -f /home/"${SUDO_USER}"/.ssh/id_ed25519 -N ""
-	updatedb
+	updatedb # update db used by locate
 	if [ -e "/home/${SUDO_USER}/.ssh/id_ed25519" ] && [ -e "/home/${SUDO_USER}/.ssh/id_ed25519.pub" ] ; then
 		printf '%s SSH ed25519 keys created!\n' "$(date +'%D %T')" >> rp_debug.log
 	else
@@ -176,11 +182,21 @@ chown "$SUDO_USER" /home/"${SUDO_USER}"/.ssh/id_ed25519.pub
 
 # Install Xclip clipboard
 printf '%s Installing xclip\n' "$(date +'%D %T')" >> rp_debug.log
-if ! "$PACKAGE_MNGR" install xclip -y ; then
-	printf '%s WARNING: xclip installation failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
-	printf '%sWARNING: Xclip clipboard installation failed. Continuing...%s\n' "${RED}" "${NC}"
-else
-	printf '%s xclip successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+
+if [ $PACKAGE_MNGR = 'apt' ]; then
+	if ! apt install xclip -y; then
+		printf '%s WARNING: xclip installation failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sWARNING: Xclip clipboard installation failed. Continuing...%s\n' "${RED}" "${NC}"
+	else
+		printf '%s xclip successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+elif [ $PACKAGE_MNGR = 'pacman' ]; then
+	if ! pacman -S xclip --noconfirm; then
+		printf '%s WARNING: xclip installation failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sWARNING: Xclip clipboard installation failed. Continuing...%s\n' "${RED}" "${NC}"
+	else
+		printf '%s xclip successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
 fi
 
 # Show SSH public key, request to add it to Github, test connection
@@ -224,27 +240,54 @@ whiptail --msgbox "SUCCESS: Connected and authenticated on Github!" --title "SUC
 
 # Remove Xclip clipboard
 printf '%s Removing xclip\n' "$(date +'%D %T')" >> rp_debug.log
-if ! "$PACKAGE_MNGR" purge xclip -y ; then
-	printf '%s WARNING: xclip removal failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
-	printf '%sWARNING: Xclip clipboard removal failed. Continuing...%s\n' "${RED}" "${NC}"
-else
-	printf '%s xclip successfully removed\n' "$(date +'%D %T')" >> rp_debug.log
+if [ $PACKAGE_MNGR = 'apt' ]; then
+	if ! apt purge xclip -y ; then
+		printf '%s WARNING: xclip removal failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sWARNING: Xclip clipboard removal failed. Continuing...%s\n' "${RED}" "${NC}"
+	else
+		printf '%s xclip successfully removed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+
+	# Update debian system
+	printf '%s Running system update\n' "$(date +'%D %T')" >> rp_debug.log
+	apt upgrade -y
+
+	# Install and config Git
+	printf '%s Installing Git\n' "$(date +'%D %T')" >> rp_debug.log
+	apt install git-all -y
+	if git --version >/dev/null 2>&1 ; then
+		printf '%s Git successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	else
+		printf '%s FAIL: Git instalation failed! (git --version >/dev/null 2>&1) did not detect Git\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sFAIL: Git instalation failed! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+		exit $?
+	fi
+
+elif [ $PACKAGE_MNGR = 'pacman' ]; then
+	if ! pacman -Rs xclip --noconfirm ; then
+		printf '%s WARNING: xclip removal failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sWARNING: Xclip clipboard removal failed. Continuing...%s\n' "${RED}" "${NC}"
+	else
+		printf '%s xclip successfully removed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+
+	# Update arch system
+	printf '%s Running system update\n' "$(date +'%D %T')" >> rp_debug.log
+	pacman -Syu --noconfirm
+
+	# Install and config Git
+	printf '%s Installing Git\n' "$(date +'%D %T')" >> rp_debug.log
+	pacman S git --noconfirm
+	if git --version >/dev/null 2>&1 ; then
+		printf '%s Git successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	else
+		printf '%s FAIL: Git instalation failed! (git --version >/dev/null 2>&1) did not detect Git\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sFAIL: Git instalation failed! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+		exit $?
+	fi
 fi
 
-# Update system
-printf '%s Running system update\n' "$(date +'%D %T')" >> rp_debug.log
-"$PACKAGE_MNGR" upgrade -y
 
-# Install and config Git
-printf '%s Installing Git\n' "$(date +'%D %T')" >> rp_debug.log
-"$PACKAGE_MNGR" install git-all -y
-if git --version >/dev/null 2>&1 ; then
-	printf '%s Git successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
-else
-	printf '%s FAIL: Git instalation failed! (git --version >/dev/null 2>&1) did not detect Git\n' "$(date +'%D %T')" >> rp_debug.log
-	printf '%sFAIL: Git instalation failed! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
-	exit $?
-fi
 
 if ! git config --global user.name "$NAME" ; then
 	printf '%sWARNING: Cannot set Git name! Continuing...%s\n' "${RED}" "${NC}"
@@ -269,33 +312,55 @@ fi
 
 # Install PHP 7.4
 printf '%s Installing php7.4-cli\n' "$(date +'%D %T')" >> rp_debug.log
-if ! "$PACKAGE_MNGR" install php7.4-cli -y ; then
-	printf '%s FAIL: Cannot install PHP 7.4 cli! Error running apt install php7.4-cli -y\n' "$(date +'%D %T')" >> rp_debug.log
-	printf '%sFAIL: Cannot install PHP 7.4 cli! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
-	exit 1
+if [ $PACKAGE_MNGR = 'apt' ]; then
+	if ! apt install php7.4-cli -y ; then
+		printf '%s FAIL: Cannot install PHP 7.4 cli! Error running apt install php7.4-cli -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sFAIL: Cannot install PHP 7.4 cli! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+		exit 1
+	fi
+
+	{
+		printf '%s php7.4-cli successfully installed\n' "$(date +'%D %T')"
+		printf '%s Installing php7.4-xmlwriter\n' "$(date +'%D %T')"
+	} >> rp_debug.log
+
+
+	if ! apt install php7.4-xmlwriter -y ; then
+		printf '%s FAIL: Cannot install PHP 7.4 xmlwriter! Error running apt install php7.4-xmlwriter -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sFAIL: Cannot install PHP 7.4 xmlwriter! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+		exit 1
+	fi
+		printf '%s php7.4-xmlwriter successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+
+	# Install Composer
+	printf '%s Installing composer\n' "$(date +'%D %T')" >> rp_debug.log
+	if ! apt install composer -y ; then
+		printf '%s FAIL: Cannot install Composer! Error running apt install composer -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sFAIL: Cannot install Composer! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+		exit 1
+	fi
+	printf '%s composer successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+elif [ $PACKAGE_MNGR = 'pacman' ]; then
+	if ! pacman -S php7 --noconfirm ; then
+		printf '%s FAIL: Cannot install PHP 7.4 cli! Error running apt install php7.4-cli -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sFAIL: Cannot install PHP 7.4 cli! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+		exit 1
+	fi
+
+	{
+		printf '%s php7.4-cli successfully installed\n' "$(date +'%D %T')"
+		printf '%s Installing php7.4-xmlwriter\n' "$(date +'%D %T')"
+	} >> rp_debug.log
+
+	# Install Composer
+	printf '%s Installing composer\n' "$(date +'%D %T')" >> rp_debug.log
+	if ! pacman -S composer --noconfirm ; then
+		printf '%s FAIL: Cannot install Composer! Error running apt install composer -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sFAIL: Cannot install Composer! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+		exit 1
+	fi
+	printf '%s composer successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
-
-{
-	printf '%s php7.4-cli successfully installed\n' "$(date +'%D %T')"
-	printf '%s Installing php7.4-xmlwriter\n' "$(date +'%D %T')"
-} >> rp_debug.log
-
-
-if ! "$PACKAGE_MNGR" install php7.4-xmlwriter -y ; then
-	printf '%s FAIL: Cannot install PHP 7.4 xmlwriter! Error running apt install php7.4-xmlwriter -y\n' "$(date +'%D %T')" >> rp_debug.log
-	printf '%sFAIL: Cannot install PHP 7.4 xmlwriter! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
-	exit 1
-fi
-	printf '%s php7.4-xmlwriter successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
-
-# Install Composer
-printf '%s Installing composer\n' "$(date +'%D %T')" >> rp_debug.log
-if ! "$PACKAGE_MNGR" install composer -y ; then
-	printf '%s FAIL: Cannot install Composer! Error running apt install composer -y\n' "$(date +'%D %T')" >> rp_debug.log
-	printf '%sFAIL: Cannot install Composer! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
-	exit 1
-fi
-printf '%s composer successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 
 # Install coding standards
 printf '%s Installing Neuralab coding standards\n' "$(date +'%D %T')" >> rp_debug.log
@@ -311,16 +376,32 @@ phpcs -i
 # If comannd not found then add to path:
 if [ $? -eq 127 ]
 then
-	printf "export PATH=\"\$HOME/.composer/vendor/bin:\$PATH\"\n" >> /home/"$SUDO_USER"/.bashrc
+	if [ $PACKAGE_MNGR = 'apt' ]; then
+		printf "export PATH=\"\$HOME/.composer/vendor/bin:\$PATH\"\n" >> /home/"$SUDO_USER"/.bashrc
+	elif [ $PACKAGE_MNGR = 'pacman' ]; then
+		printf "export PATH=\"\$HOME/.config/composer/vendor/bin:\$PATH\"\n" >> /home/"$SUDO_USER"/.zshrc
+		printf "export PATH=\"\$HOME/.config/composer/vendor/bin:\$PATH\"\n" >> /home/"$SUDO_USER"/.bashrc
+	fi
 fi
 
 # Install Node version manager
 printf '%s Installing Node Version Manager\n' "$(date +'%D %T')" >> rp_debug.log
-su "$SUDO_USER" -c "wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
 
-NVM_DIR="/home/${SUDO_USER}/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+su "$SUDO_USER" -c "git clone https://github.com/nvm-sh/nvm.git /home/${SUDO_USER}/.nvm"
+su "$SUDO_USER" -c "cd /home/${SUDO_USER}/.nvm && git checkout v0.39.0 && . ./nvm.sh"
+{
+	printf 'NVM_DIR="/home/%s/.nvm"\n' "$SUDO_USER"
+	printf '[ -s "%s/nvm.sh" ] && \\. "%s/nvm.sh"\n' "$NVM_DIR" "$NVM_DIR"
+	printf '[ -s "%s/bash_completion" ] && \\. "%s/bash_completion"\n' "$NVM_DIR" "$NVM_DIR"
+} >> /home/"$SUDO_USER"/.bashrc
+
+if [ $PACKAGE_MNGR = 'pacman' ]; then
+	{
+		printf 'NVM_DIR="/home/%s/.nvm"\n' "$SUDO_USER"
+		printf '[ -s "%s/nvm.sh" ] && \\. "%s/nvm.sh"\n' "$NVM_DIR" "$NVM_DIR"
+		printf '[ -s "%s/bash_completion" ] && \\. "%s/bash_completion"\n' "$NVM_DIR" "$NVM_DIR"
+	} >> /home/"$SUDO_USER"/.zshrc
+fi
 
 if ! command -v nvm ; then
 	printf '%s FAIL: Something went wrong. Cannot run nvm command!\n' "$(date +'%D %T')" >> rp_debug.log
@@ -345,7 +426,7 @@ else
 fi
 
 # Install Visual Studio Code
-if [ -n "$DEBIAN" ] ; then
+if [ $PACKAGE_MNGR = 'apt' ]; then
 	printf '%s Installing Visual Studio Code\n' "$(date +'%D %T')" >> rp_debug.log
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
 	install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
@@ -359,39 +440,67 @@ if [ -n "$DEBIAN" ] ; then
 	else
 		printf '%s Visual Studio Code successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
-else
-	printf '%s Visual Studio Code installation for ARCH currently in development\n' "$(date +'%D %T')" >> rp_debug.log
+elif [ $PACKAGE_MNGR = 'pacman' ]; then
+	ln -s /var/lib/snapd/snap /snap
+	if ! snap install code --classic ; then
+		printf '%s WARNING: Visual Studio Code installation failed. Continuing...\n' "$(date +'%D %T')" >> rp_debug.log
+	else
+		printf '%s Visual Studio Code successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
 fi
 
 # Install Virtual box
 printf '%s Installing virtualbox\n' "$(date +'%D %T')" >> rp_debug.log
-if ! "$PACKAGE_MNGR" install virtualbox -y ; then
-	printf '%s FAIL: virtualbox installation failed. Error running apt install virtualbox -y\n' "$(date +'%D %T')" >> rp_debug.log
-	printf '%sSomething went wrong. Virtualbox installation failed!%s\n' "${RED}" "${NC}"
-	exit 1
-else
-	printf '%s virtualbox successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+if [ $PACKAGE_MNGR = 'apt' ]; then
+	if ! apt install virtualbox -y ; then
+		printf '%s FAIL: virtualbox installation failed. Error running apt install virtualbox -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sSomething went wrong. Virtualbox installation failed!%s\n' "${RED}" "${NC}"
+		exit 1
+	else
+		printf '%s virtualbox successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+
+	printf '%s Installing virtualbox-guest-additions-iso\n' "$(date +'%D %T')" >> rp_debug.log
+	if ! apt install virtualbox-guest-additions-iso -y ; then
+		printf '%s FAIL: virtualbox-guest-additions-iso installation failed. Error running apt install virtualbox-guest-additions-iso -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sSomething went wrong. Virtualbox guest additions installation failed!%s\n' "${RED}" "${NC}"
+		exit 1
+	else
+		printf '%s virtualbox-guest-additions-iso successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+
+	# Install Vagrant
+	printf '%s Installing vagrant\n' "$(date +'%D %T')" >> rp_debug.log
+	if ! apt install vagrant -y ; then
+		printf '%s FAIL: vagrant installation failed. Error running apt install vagrant -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sSomething went wrong. Vagrant installation failed!%s\n' "${RED}" "${NC}"
+		exit 1
+	else
+		printf '%s vagrant successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+
+elif [ $PACKAGE_MNGR = 'pacman' ]; then
+	if ! pacman -S virtualbox --noconfirm ; then
+		printf '%s FAIL: virtualbox installation failed. Error running apt install virtualbox -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sSomething went wrong. Virtualbox installation failed!%s\n' "${RED}" "${NC}"
+		exit 1
+	else
+		printf '%s virtualbox successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+
+	# Install Vagrant
+	printf '%s Installing vagrant\n' "$(date +'%D %T')" >> rp_debug.log
+	if ! pacman -S vagrant --noconfirm ; then
+		printf '%s FAIL: vagrant installation failed. Error running apt install vagrant -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sSomething went wrong. Vagrant installation failed!%s\n' "${RED}" "${NC}"
+		exit 1
+	else
+		printf '%s vagrant successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+
 fi
 
-printf '%s Installing virtualbox-guest-additions-iso\n' "$(date +'%D %T')" >> rp_debug.log
-if ! "$PACKAGE_MNGR" install virtualbox-guest-additions-iso -y ; then
-	printf '%s FAIL: virtualbox-guest-additions-iso installation failed. Error running apt install virtualbox-guest-additions-iso -y\n' "$(date +'%D %T')" >> rp_debug.log
-	printf '%sSomething went wrong. Virtualbox guest additions installation failed!%s\n' "${RED}" "${NC}"
-	exit 1
-else
-	printf '%s virtualbox-guest-additions-iso successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
-fi
-
-# Install Vagrant
-printf '%s Installing vagrant\n' "$(date +'%D %T')" >> rp_debug.log
-if ! "$PACKAGE_MNGR" install vagrant -y ; then
-	printf '%s FAIL: vagrant installation failed. Error running apt install vagrant -y\n' "$(date +'%D %T')" >> rp_debug.log
-	printf '%sSomething went wrong. Vagrant installation failed!%s\n' "${RED}" "${NC}"
-	exit 1
-else
-	printf '%s vagrant successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
-fi
-
+# Install Vagrant plugins
 printf '%s Installing vagrant-bindfs\n' "$(date +'%D %T')" >> rp_debug.log
 if ! vagrant plugin install vagrant-bindfs ; then
 	printf '%s FAIL: vagrant-bindfs installation failed. Error running vagrant plugin install vagrant-bindfs\n' "$(date +'%D %T')" >> rp_debug.log
@@ -417,6 +526,11 @@ cd /home/"$SUDO_USER"/homestead && git checkout release && bash init.sh
 
 printf "function homestead() { ( cd ~/homestead && vagrant \"\$@\" ) }\n" >> /home/"$SUDO_USER"/.bashrc
 printf "export -f homestead\n" >> /home/"$SUDO_USER"/.bashrc
+
+if [ $PACKAGE_MNGR = 'pacman' ]; then
+	printf "function homestead() { ( cd ~/homestead && vagrant \"\$@\" ) }\n" >> /home/"$SUDO_USER"/.zshrc
+	printf "export -f homestead\n" >> /home/"$SUDO_USER"/.zshrc
+fi
 
 sed -i '/192.168./c\ip: "192.168.10.10"' /home/"$SUDO_USER"/homestead/Homestead.yaml
 sed -i '/authorize:/c\authorize: ~/.ssh/id_ed25519.pub' /home/"$SUDO_USER"/homestead/Homestead.yaml
