@@ -388,7 +388,7 @@ fi
 printf '%s Installing Node Version Manager\n' "$(date +'%D %T')" >> rp_debug.log
 
 su "$SUDO_USER" -c "git clone https://github.com/nvm-sh/nvm.git /home/${SUDO_USER}/.nvm"
-su "$SUDO_USER" -c "cd /home/${SUDO_USER}/.nvm && git checkout v0.39.0 && . home/${SUDO_USER}/.nvm/nvm.sh"
+su "$SUDO_USER" -c "cd /home/${SUDO_USER}/.nvm && git checkout v0.39.0 && . /home/${SUDO_USER}/.nvm/nvm.sh"
 {
 	printf 'NVM_DIR="/home/%s/.nvm"\n' "$SUDO_USER"
 	printf '[ -s "%s/nvm.sh" ] && \\. "%s/nvm.sh"\n' "$NVM_DIR" "$NVM_DIR"
