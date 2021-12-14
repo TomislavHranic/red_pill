@@ -388,18 +388,21 @@ fi
 printf '%s Installing Node Version Manager\n' "$(date +'%D %T')" >> rp_debug.log
 
 su "$SUDO_USER" -c "git clone https://github.com/nvm-sh/nvm.git /home/${SUDO_USER}/.nvm"
-su "$SUDO_USER" -c "cd /home/${SUDO_USER}/.nvm && git checkout v0.39.0 && . /home/${SUDO_USER}/.nvm/nvm.sh"
+su "$SUDO_USER" -c "cd /home/${SUDO_USER}/.nvm && git checkout v0.39.0"
+
+. /home/$SUDO_USER/.nvm/nvm.sh
+
 {
-	printf 'NVM_DIR="/home/%s/.nvm"\n' "$SUDO_USER"
-	printf '[ -s "%s/nvm.sh" ] && \\. "%s/nvm.sh"\n' "$NVM_DIR" "$NVM_DIR"
-	printf '[ -s "%s/bash_completion" ] && \\. "%s/bash_completion"\n' "$NVM_DIR" "$NVM_DIR"
+	printf "NVM_DIR=\"\$HOME/.nvm\"\n"
+	printf "[ -s \"\$NVM_DIR/nvm.sh\" ] && \\. \"\$NVM_DIR/nvm.sh\"\n"
+	printf "[ -s \"\$NVM_DIR/bash_completion\" ] && \\. \"\$NVM_DIR/bash_completion\"\n"
 } >> /home/"$SUDO_USER"/.bashrc
 
 if [ $PACKAGE_MNGR = 'pacman' ]; then
 	{
-		printf 'NVM_DIR="/home/%s/.nvm"\n' "$SUDO_USER"
-		printf '[ -s "%s/nvm.sh" ] && \\. "%s/nvm.sh"\n' "$NVM_DIR" "$NVM_DIR"
-		printf '[ -s "%s/bash_completion" ] && \\. "%s/bash_completion"\n' "$NVM_DIR" "$NVM_DIR"
+		printf "NVM_DIR=\"\$HOME/.nvm\"\n"
+		printf "[ -s \"\$NVM_DIR/nvm.sh\" ] && \\. \"\$NVM_DIR/nvm.sh\"\n"
+		printf "[ -s \"\$NVM_DIR/bash_completion\" ] && \\. \"\$NVM_DIR/bash_completion\"\n"
 	} >> /home/"$SUDO_USER"/.zshrc
 fi
 
