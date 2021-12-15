@@ -517,6 +517,8 @@ elif [ $PACKAGE_MNGR = 'pacman' ]; then
 		printf '%s vagrant successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
 
+	vboxreload
+
 fi
 
 # Install Vagrant plugins
