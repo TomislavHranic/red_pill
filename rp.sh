@@ -491,6 +491,22 @@ elif [ $PACKAGE_MNGR = 'pacman' ]; then
 		printf '%s virtualbox successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
 
+	if ! pacman -S linux514-virtualbox-host-modules --noconfirm ; then
+		printf '%s FAIL: virtualbox host modules installation failed. Error running pacman -S linux514-virtualbox-host-modules --noconfirm\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sSomething went wrong. Virtualbox host modules installation failed!%s\n' "${RED}" "${NC}"
+		exit 1
+	else
+		printf '%s virtualbox host modules successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+
+	if ! modprobe vboxdrv ; then
+		printf '%s FAIL: virtualbox host modules installation failed. Error running pacman -S linux514-virtualbox-host-modules --noconfirm\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sSomething went wrong. Virtualbox host modules installation failed!%s\n' "${RED}" "${NC}"
+		exit 1
+	else
+		printf '%s virtualbox host modules successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+	fi
+
 	# Install Vagrant
 	printf '%s Installing vagrant\n' "$(date +'%D %T')" >> rp_debug.log
 	if ! pacman -S vagrant --noconfirm ; then
