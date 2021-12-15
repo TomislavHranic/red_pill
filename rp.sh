@@ -342,15 +342,12 @@ if [ $PACKAGE_MNGR = 'apt' ]; then
 	printf '%s composer successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 elif [ $PACKAGE_MNGR = 'pacman' ]; then
 	if ! pacman -S php7 --noconfirm ; then
-		printf '%s FAIL: Cannot install PHP 7.4 cli! Error running apt install php7.4-cli -y\n' "$(date +'%D %T')" >> rp_debug.log
-		printf '%sFAIL: Cannot install PHP 7.4 cli! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
+		printf '%s FAIL: Cannot install PHP 7! Error running pacman -S php7 --noconfirm\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sFAIL: Cannot install PHP 7! Check rp_debug.log for more info.%s\n' "${RED}" "${NC}"
 		exit 1
 	fi
 
-	{
-		printf '%s php7.4-cli successfully installed\n' "$(date +'%D %T')"
-		printf '%s Installing php7.4-xmlwriter\n' "$(date +'%D %T')"
-	} >> rp_debug.log
+	printf '%s php7 successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 
 	# Install Composer
 	printf '%s Installing composer\n' "$(date +'%D %T')" >> rp_debug.log
@@ -460,7 +457,7 @@ if [ $PACKAGE_MNGR = 'apt' ]; then
 		printf '%sSomething went wrong. Virtualbox installation failed!%s\n' "${RED}" "${NC}"
 		exit 1
 	else
-		printf '%s virtualbox successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%s Virtualbox successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
 
 	printf '%s Installing virtualbox-guest-additions-iso\n' "$(date +'%D %T')" >> rp_debug.log
@@ -469,7 +466,7 @@ if [ $PACKAGE_MNGR = 'apt' ]; then
 		printf '%sSomething went wrong. Virtualbox guest additions installation failed!%s\n' "${RED}" "${NC}"
 		exit 1
 	else
-		printf '%s virtualbox-guest-additions-iso successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%s Virtualbox-guest-additions-iso successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
 
 	# Install Vagrant
@@ -479,7 +476,7 @@ if [ $PACKAGE_MNGR = 'apt' ]; then
 		printf '%sSomething went wrong. Vagrant installation failed!%s\n' "${RED}" "${NC}"
 		exit 1
 	else
-		printf '%s vagrant successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%s Vagrant successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
 
 elif [ $PACKAGE_MNGR = 'pacman' ]; then
@@ -488,7 +485,7 @@ elif [ $PACKAGE_MNGR = 'pacman' ]; then
 		printf '%sSomething went wrong. Virtualbox installation failed!%s\n' "${RED}" "${NC}"
 		exit 1
 	else
-		printf '%s virtualbox successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%s Virtualbox successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
 
 	if ! pacman -S linux515-virtualbox-host-modules --noconfirm ; then
@@ -496,25 +493,25 @@ elif [ $PACKAGE_MNGR = 'pacman' ]; then
 		printf '%sSomething went wrong. Virtualbox host modules installation failed!%s\n' "${RED}" "${NC}"
 		exit 1
 	else
-		printf '%s virtualbox host modules successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%s Virtualbox host modules successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
 
 	if ! modprobe vboxdrv ; then
-		printf '%s FAIL: virtualbox host modules installation failed. Error running pacman -S linux514-virtualbox-host-modules --noconfirm\n' "$(date +'%D %T')" >> rp_debug.log
-		printf '%sSomething went wrong. Virtualbox host modules installation failed!%s\n' "${RED}" "${NC}"
+		printf '%s FAIL: Loading virtualbox linux kernel driver failed. Error running modprobe vboxdrv\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%sSomething went wrong. Loading virtualbox linux kernel driver failed!%s\n' "${RED}" "${NC}"
 		exit 1
 	else
-		printf '%s virtualbox host modules successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%s Virtualbox kernel driver loaded\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
 
 	# Install Vagrant
 	printf '%s Installing vagrant\n' "$(date +'%D %T')" >> rp_debug.log
 	if ! pacman -S vagrant --noconfirm ; then
-		printf '%s FAIL: vagrant installation failed. Error running apt install vagrant -y\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%s FAIL: Vagrant installation failed. Error running pacman -S vagrant --noconfirm\n' "$(date +'%D %T')" >> rp_debug.log
 		printf '%sSomething went wrong. Vagrant installation failed!%s\n' "${RED}" "${NC}"
 		exit 1
 	else
-		printf '%s vagrant successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
+		printf '%s Vagrant successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 	fi
 
 	vboxreload
