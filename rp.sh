@@ -535,7 +535,7 @@ if [ $PACKAGE_MNGR = 'pacman' ]; then
 	printf "export -f homestead\n" >> /home/"$SUDO_USER"/.zshrc
 fi
 
-sed -i '/192.168./c\ip: "192.168.10.10"' /home/"$SUDO_USER"/homestead/Homestead.yaml
+sed -i '/192.168./c\ip: "192.168.56.10"' /home/"$SUDO_USER"/homestead/Homestead.yaml
 sed -i '/authorize:/c\authorize: ~/.ssh/id_ed25519.pub' /home/"$SUDO_USER"/homestead/Homestead.yaml
 sed -i '/ssh\/id_rsa/c\    - ~/.ssh/id_ed25519' /home/"$SUDO_USER"/homestead/Homestead.yaml
 
@@ -545,7 +545,7 @@ sed -i -r '/IS_HOMESTEAD/a \ \ \ \ \ \ value: "true"' /home/"$SUDO_USER"/homeste
 
 chown -R "$SUDO_USER" /home/"$SUDO_USER"/homestead
 
-printf "192.168.10.10 dev.neuralab.test\n" >> /etc/hosts
+printf "192.168.56.10 dev.neuralab.test\n" >> /etc/hosts
 
 mkdir /home/"$SUDO_USER"/www
 chown -R "$SUDO_USER" /home/"$SUDO_USER"/www
