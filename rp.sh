@@ -537,10 +537,12 @@ else
 	printf '%s vagrant-faster successfully installed\n' "$(date +'%D %T')" >> rp_debug.log
 fi
 
+vagrant box add --box-version 9.7.2 laravel/homestead
+
 # Install homestead
 printf '%s Installing homestead\n' "$(date +'%D %T')" >> rp_debug.log
 git clone https://github.com/laravel/homestead.git /home/"$SUDO_USER"/homestead
-cd /home/"$SUDO_USER"/homestead && git checkout release && bash init.sh
+cd /home/"$SUDO_USER"/homestead && git checkout v9.4.1 && bash init.sh
 
 printf "function homestead() { ( cd ~/homestead && vagrant \"\$@\" ) }\n" >> /home/"$SUDO_USER"/.bashrc
 printf "export -f homestead\n" >> /home/"$SUDO_USER"/.bashrc
